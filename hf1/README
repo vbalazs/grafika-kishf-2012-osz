@@ -1,0 +1,11 @@
+Hansel és Gretel hegyes-völgyes, 10km x 10km-es négyzet alakú, kerítéssel körbevett erdőben rohangál (gyorsan), ahol elvesztették egymást.
+
+A legmélyebb völgy tengerszint feletti magassága 250m, a legmagasabb hegycsúcsé 1014m. A terep magasságát tetszőleges differenciálható, egynél több lokális minimummal és maximummal rendelkező függvénnyel definiálhatja, ami célszerűen különbözik a közeli barátok függvényeitől.
+
+Az erdő egy (pszeudo) véletlenszerűen kiválasztott pontján egy 20 m magas torony tetején mobiltelefon antenna található. A 't' billentyű lenyomásának hatására a telefontársaság egy brigádja kiszáll és egy szempillantás alatt egy másik (pszeudo) véletlen pontra telepíti a tornyot. Hansel az egér bal gomb lenyomásának helyét, Gretel pedig a jobb gomb lenyomásának helyét célozza meg, újabb egéreseményeknél irányt váltanak, a kerítéshez érve billiárd golyóhoz hasonlóan visszaverődnek.
+
+Értelemszerűen Hansel és Gretel a terepen halad. Hansel és Gretel terepmenti sebessége (figyelem, ez nem egyezik meg a felülnézetből észlelt sebességgel) V*(1-M/90), ahol V=1000 m/s a vízszintes talajon elérhető sebesség, M pedig a terep meredeksége fokban (lejtő esetén a meredekség negatív). A meredekséget a függvényből szimbolikus deriválással (azaz nem differenciahányados közelítéssel) kell számítani, célszerűen saját kézzel, nem pedig valamely matematikai csomag felhasználásával.
+
+A világ aktuális állapotát felülnézetből kell megjeleníteni, ahol a terepet szürkeárnyalatos képként ábrázoljuk, a legmagasabb pont fehér, a legalacsonyabb pont fekete, a közbenső magasságok pedig arányosan szürkék. Hansel és Gretel a Mars, illetve a Vénusz jelét kapják, Hansel világoskék, Gretel pedig rózsaszín. A bolygók jelében található köröket százszöggel kell közelíteni. A torony felülnézetben egy sárga háromszögnek látszik. A feladat azon pillanatok azonosítása, amikor Gretel mobilozhat Hanselnek, azaz, amikor mindketten rálátnak az antennára. Ekkor a torony, Hansel és Gretel között egy piros háromszöget kell kirajzolni. A fénykép tetején egy progress-bar mutatja, hogy az idő hányad részében tudta elérni Gretel Hanselt.
+
+A feladatot diszkrét-idő szimulációval kell megoldani, ahol a mintavételi idő 100 msec. A láthatóságot sugármasírozással (ray-marching) lehet ellenőrizni, legfeljebb 100m-res lépésközt alkalmazva.
