@@ -53,7 +53,7 @@
 #include <GL/glu.h>
 // A GLUT-ot le kell tolteni: http://www.opengl.org/resources/libraries/glut/
 #include <GL/glut.h>
-
+#include <stdio.h>
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Innentol modosithatod...
@@ -132,12 +132,16 @@ struct Color {
 
 const int screenWidth = 600; // alkalmazás ablak felbontása
 const int screenHeight = 600;
-
+const int COORD_NAT = 5000;
+const int MIN_HEIGHT = 250;
+const int MAX_HEIGHT = 1014;
+const int TOWER_HEIGHT = 20;
+const Color COLOR_HANSEL = Color(117.0 / 255, 148.0 / 255, 202.0 / 255);
+const Color COLOR_GRETA = Color(1.0, 160.0 / 255, 180.0 / 255.0);
 
 Color image[screenWidth*screenHeight]; // egy alkalmazás ablaknyi kép
-
-
-// Inicializacio, a program futasanak kezdeten, az OpenGL kontextus letrehozasa utan hivodik meg (ld. main() fv.)
+long time = 0;
+bool working = false;
 
 void onInitialization() {
     glViewport(0, 0, screenWidth, screenHeight);
@@ -149,8 +153,6 @@ void onInitialization() {
 
 }
 
-// Rajzolas, ha az alkalmazas ablak ervenytelenne valik, akkor ez a fuggveny hivodik meg
-
 void onDisplay() {
     glClearColor(0.1f, 0.2f, 0.3f, 1.0f); // torlesi szin beallitasa
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // kepernyo torles
@@ -160,38 +162,60 @@ void onDisplay() {
     // Peldakent atmasoljuk a kepet a rasztertarba
     glDrawPixels(screenWidth, screenHeight, GL_RGB, GL_FLOAT, image);
     // Majd rajzolunk egy kek haromszoget
-    glColor3f(0, 0, 1);
+    glColor3f(COLOR_GRETA.r, COLOR_GRETA.g, COLOR_GRETA.b);
     glBegin(GL_TRIANGLES);
     glVertex2f(-0.2f, -0.2f);
     glVertex2f(0.2f, -0.2f);
     glVertex2f(0.0f, 0.2f);
     glEnd();
 
-    // ...
-
     glutSwapBuffers(); // Buffercsere: rajzolas vege
 
 }
 
-// Billentyuzet esemenyeket lekezelo fuggveny
-
 void onKeyboard(unsigned char key, int x, int y) {
     if (key == 'd') glutPostRedisplay(); // d beture rajzold ujra a kepet
+    if (key == 't') { //torony áthelyezése
+        printf("->torony athelyezese\n");
+    }
 
 }
-
-// Eger esemenyeket lekezelo fuggveny
 
 void onMouse(int button, int state, int x, int y) {
-    if (button == GLUT_LEFT && state == GLUT_DOWN) // A GLUT_LEFT_BUTTON / GLUT_RIGHT_BUTTON illetve GLUT_DOWN / GLUT_UP
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {// hansel
+        printf("->hansel iranyvalt\n");
         glutPostRedisplay(); // Ilyenkor rajzold ujra a kepet
+    } else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {// greta
+        printf("->greta iranyvalt\n");
+        glutPostRedisplay(); // Ilyenkor rajzold ujra a kepet
+    }
 }
 
-// `Idle' esemenykezelo, jelzi, hogy az ido telik, az Idle esemenyek frekvenciajara csak a 0 a garantalt minimalis ertek
+void simulateWorld(long tstart, long tend) {
+    float dt = 50;
+    for (float ts = tstart; ts < tend; ts += dt) {
+        float te;
+        if (tend >= ts + dt) {
+            te = ts + dt;
+        } else {
+            te = tend;
+        }
+
+        //do stuff
+    }
+}
 
 void onIdle() {
-    long time = glutGet(GLUT_ELAPSED_TIME); // program inditasa ota eltelt ido
+    if (!working) {
+        working = true;
+        long old_time = time;
+        time = glutGet(GLUT_ELAPSED_TIME);
 
+        simulateWorld(old_time, time);
+
+        working = false;
+        glutPostRedisplay();
+    }
 }
 
 // ...Idaig modosithatod
