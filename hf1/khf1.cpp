@@ -132,22 +132,28 @@ struct Color {
 
 const int screenWidth = 600; // alkalmazás ablak felbontása
 const int screenHeight = 600;
-const double PIXEL_RATE = 100.0;
-const int COORD_NAT = 5000;
+const int FOREST_WIDTH = 10000;
 const int MIN_HEIGHT = 250;
 const int MAX_HEIGHT = 1014;
 const int TOWER_HEIGHT = 20;
+const int SIGN_HG_CIRCLE_LINE_NUM = 100;
+const int SIGN_HG_CIRCLE_RADIUS = 250;
 const Color COLOR_HANSEL = Color(117.0 / 255, 148.0 / 255, 202.0 / 255);
 const Color COLOR_GRETA = Color(1.0, 160.0 / 255, 180.0 / 255.0);
 
 Color image[screenWidth*screenHeight];
-Vector centerHansel = Vector(3000, 0);
-Vector centerGreta = Vector(-3000, -3000);
+Vector centerHansel = Vector(5000, 5000);
+Vector centerGreta = Vector(3000, 3000);
 long time = 0;
 bool working = false;
 
+const bool fequals(float f1, float f2) {
+    if (fabs(f1 - f2) < 0.001) return true;
+    return false;
+}
+
 const Vector convertPixelsToVariable(const Vector pixel) {
-    return Vector((double) pixel.x / PIXEL_RATE, (double) pixel.y / PIXEL_RATE);
+    return Vector((double) pixel.x / 100.0, (double) pixel.y / 100.0);
 }
 
 const double calculateHeightValue(const Vector varVector) {
@@ -158,6 +164,18 @@ const double calculateHeightValue(const Vector varVector) {
 const double calculateHeightValueFromPixel(const Vector pixel) {
     const Vector v = convertPixelsToVariable(pixel);
     return calculateHeightValue(v);
+}
+
+const Vector convertNatToGl(const Vector natCoord) {
+    return Vector(
+            (natCoord.x - FOREST_WIDTH / 2) * (1.0 / (FOREST_WIDTH / 2)),
+            (natCoord.y - FOREST_WIDTH / 2) * (1.0 / (FOREST_WIDTH / 2)));
+}
+
+void glVertex2Vectors(const Vector vectors[], const int size) {
+    for (int i = 0; i < size; i++) {
+        glVertex2f(vectors[i].x, vectors[i].y);
+    }
 }
 
 void ThisEnterpriseMethodGeneratesTheMagicForestSoHeresANotFunnyJoke___I_used_to_be_a_werewolf_But_I_am_much_better_nooooooooooooooooooooooooow() {
@@ -173,12 +191,72 @@ void ThisEnterpriseMethodGeneratesTheMagicForestSoHeresANotFunnyJoke___I_used_to
     }
 }
 
-void drawHansel(const Vector center) {
+void drawHansel(const Vector natCenter) {
+    double angle;
+    Vector natCoordConnect;
 
+    Vector circleVectors[SIGN_HG_CIRCLE_LINE_NUM];
+    for (int i = 0; i < SIGN_HG_CIRCLE_LINE_NUM; i++) {
+        angle = i * 2 * M_PI / SIGN_HG_CIRCLE_LINE_NUM;
+        Vector natCoord = Vector(natCenter.x + (cos(angle) * SIGN_HG_CIRCLE_RADIUS),
+                natCenter.y + (sin(angle) * SIGN_HG_CIRCLE_RADIUS));
+
+        circleVectors[i] = convertNatToGl(natCoord);
+
+        if (fequals(angle, 0.2 * M_PI)) {
+            natCoordConnect = natCoord;
+        }
+    }
+
+    glColor3f(COLOR_HANSEL.r, COLOR_HANSEL.g, COLOR_HANSEL.b);
+    glLineWidth(3.0);
+    glBegin(GL_LINE_LOOP);
+    glVertex2Vectors(circleVectors, SIGN_HG_CIRCLE_LINE_NUM);
+    glEnd();
+
+    Vector glCoordConnect = convertNatToGl(natCoordConnect);
+    Vector glCoordConnectLineEnd = convertNatToGl(Vector(natCoordConnect.x + 350, natCoordConnect.y + 300));
+    Vector glCoordArrowLineEnd_1 = convertNatToGl(Vector(natCoordConnect.x + 100, natCoordConnect.y + 300));
+    Vector glCoordArrowLineEnd_2 = convertNatToGl(Vector(natCoordConnect.x + 350, natCoordConnect.y + 50));
+
+    const Vector lineVectors[] = {glCoordConnect, glCoordConnectLineEnd, glCoordConnectLineEnd,
+        glCoordArrowLineEnd_1, glCoordConnectLineEnd, glCoordArrowLineEnd_2};
+    glBegin(GL_LINES);
+    glVertex2Vectors(lineVectors, 6);
+    glEnd();
 }
 
-void drawGreta(const Vector center) {
+void drawGreta(const Vector natCenter) {
+    double angle;
+    Vector natCoordConnect;
 
+    Vector circleVectors[SIGN_HG_CIRCLE_LINE_NUM];
+    for (int i = 0; i < SIGN_HG_CIRCLE_LINE_NUM; i++) {
+        angle = i * 2 * M_PI / SIGN_HG_CIRCLE_LINE_NUM;
+        Vector natCoord = Vector(natCenter.x + (cos(angle) * SIGN_HG_CIRCLE_RADIUS),
+                natCenter.y + (sin(angle) * SIGN_HG_CIRCLE_RADIUS));
+
+        circleVectors[i] = convertNatToGl(natCoord);
+
+        if (fequals(angle, (3.0 / 2) * M_PI)) {
+            natCoordConnect = natCoord;
+        }
+    }
+
+    glColor3f(COLOR_GRETA.r, COLOR_GRETA.g, COLOR_GRETA.b);
+    glLineWidth(3.0);
+    glBegin(GL_LINE_LOOP);
+    glVertex2Vectors(circleVectors, SIGN_HG_CIRCLE_LINE_NUM);
+    glEnd();
+
+    Vector glCoordConnect = convertNatToGl(natCoordConnect);
+    Vector glCoordConnectLineEnd = convertNatToGl(Vector(natCoordConnect.x, natCoordConnect.y - 500));
+    Vector glCoordCrossLine = convertNatToGl(Vector(natCoordConnect.x - 150, natCoordConnect.y - 250));
+    Vector glCoordCrossLineEnd = convertNatToGl(Vector(natCoordConnect.x + 150, natCoordConnect.y - 250));
+    const Vector lineVectors[] = {glCoordConnect, glCoordConnectLineEnd, glCoordCrossLine, glCoordCrossLineEnd};
+    glBegin(GL_LINES);
+    glVertex2Vectors(lineVectors, 4);
+    glEnd();
 }
 
 void onInitialization() {
@@ -198,11 +276,18 @@ void onDisplay() {
     drawHansel(centerHansel);
 
     glColor3f(COLOR_GRETA.r, COLOR_GRETA.g, COLOR_GRETA.b);
-    glBegin(GL_TRIANGLES);
-    glVertex2f(-0.2f, -0.2f);
-    glVertex2f(0.2f, -0.2f);
-    glVertex2f(0.0f, 0.2f);
-    glEnd();
+    //    Vector a(2000.0, 1000.0);
+    //    Vector b(5000.0, 100.0);
+    //    Vector c(10000.0, 0.0);
+    //
+    //    Vector a_ = convertNatToGl(a);
+    //    Vector b_ = convertNatToGl(b);
+    //    Vector c_ = convertNatToGl(c);
+    //    glBegin(GL_TRIANGLES);
+    //    glVertex2f(a_.x, a_.y);
+    //    glVertex2f(b_.x, b_.y);
+    //    glVertex2f(c_.x, c_.y);
+    //    glEnd();
 
     glutSwapBuffers(); // Buffercsere: rajzolas vege
 
