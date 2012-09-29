@@ -132,6 +132,7 @@ struct Color {
 
 const int screenWidth = 600; // alkalmazás ablak felbontása
 const int screenHeight = 600;
+const double PIXEL_RATE = 100.0;
 const int COORD_NAT = 5000;
 const int MIN_HEIGHT = 250;
 const int MAX_HEIGHT = 1014;
@@ -139,17 +140,51 @@ const int TOWER_HEIGHT = 20;
 const Color COLOR_HANSEL = Color(117.0 / 255, 148.0 / 255, 202.0 / 255);
 const Color COLOR_GRETA = Color(1.0, 160.0 / 255, 180.0 / 255.0);
 
-Color image[screenWidth*screenHeight]; // egy alkalmazás ablaknyi kép
+Color image[screenWidth*screenHeight];
+Vector centerHansel = Vector(3000, 0);
+Vector centerGreta = Vector(-3000, -3000);
 long time = 0;
 bool working = false;
+
+const Vector convertPixelsToVariable(const Vector pixel) {
+    return Vector((double) pixel.x / PIXEL_RATE, (double) pixel.y / PIXEL_RATE);
+}
+
+const double calculateHeightValue(const Vector varVector) {
+    return fabs(sin(2 * varVector.x) + cos(3 * varVector.y)
+            + sin(varVector.x * varVector.y) * sin(varVector.x));
+}
+
+const double calculateHeightValueFromPixel(const Vector pixel) {
+    const Vector v = convertPixelsToVariable(pixel);
+    return calculateHeightValue(v);
+}
+
+void ThisEnterpriseMethodGeneratesTheMagicForestSoHeresANotFunnyJoke___I_used_to_be_a_werewolf_But_I_am_much_better_nooooooooooooooooooooooooow() {
+    double height;
+    double greyCode;
+
+    for (int y = 0; y < screenHeight; y++) {
+        for (int x = 0; x < screenWidth; x++) {
+            height = calculateHeightValueFromPixel(Vector(x, y));
+            greyCode = height * (1.0 / 2.0);
+            image[y * screenWidth + x] = Color(greyCode, greyCode, greyCode);
+        }
+    }
+}
+
+void drawHansel(const Vector center) {
+
+}
+
+void drawGreta(const Vector center) {
+
+}
 
 void onInitialization() {
     glViewport(0, 0, screenWidth, screenHeight);
 
-    // Peldakent keszitunk egy kepet az operativ memoriaba
-    for (int Y = 0; Y < screenHeight; Y++)
-        for (int X = 0; X < screenWidth; X++)
-            image[Y * screenWidth + X] = Color((float) X / screenWidth, (float) Y / screenHeight, 0);
+    ThisEnterpriseMethodGeneratesTheMagicForestSoHeresANotFunnyJoke___I_used_to_be_a_werewolf_But_I_am_much_better_nooooooooooooooooooooooooow();
 
 }
 
@@ -157,11 +192,11 @@ void onDisplay() {
     glClearColor(0.1f, 0.2f, 0.3f, 1.0f); // torlesi szin beallitasa
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // kepernyo torles
 
-    // ..
-
-    // Peldakent atmasoljuk a kepet a rasztertarba
     glDrawPixels(screenWidth, screenHeight, GL_RGB, GL_FLOAT, image);
-    // Majd rajzolunk egy kek haromszoget
+
+    drawGreta(centerGreta);
+    drawHansel(centerHansel);
+
     glColor3f(COLOR_GRETA.r, COLOR_GRETA.g, COLOR_GRETA.b);
     glBegin(GL_TRIANGLES);
     glVertex2f(-0.2f, -0.2f);
