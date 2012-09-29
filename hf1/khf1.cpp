@@ -209,7 +209,6 @@ void drawHansel(const Vector natCenter) {
     }
 
     glColor3f(COLOR_HANSEL.r, COLOR_HANSEL.g, COLOR_HANSEL.b);
-    glLineWidth(3.0);
     glBegin(GL_LINE_LOOP);
     glVertex2Vectors(circleVectors, SIGN_HG_CIRCLE_LINE_NUM);
     glEnd();
@@ -244,7 +243,6 @@ void drawGreta(const Vector natCenter) {
     }
 
     glColor3f(COLOR_GRETA.r, COLOR_GRETA.g, COLOR_GRETA.b);
-    glLineWidth(3.0);
     glBegin(GL_LINE_LOOP);
     glVertex2Vectors(circleVectors, SIGN_HG_CIRCLE_LINE_NUM);
     glEnd();
@@ -275,20 +273,6 @@ void onDisplay() {
     drawGreta(centerGreta);
     drawHansel(centerHansel);
 
-    glColor3f(COLOR_GRETA.r, COLOR_GRETA.g, COLOR_GRETA.b);
-    //    Vector a(2000.0, 1000.0);
-    //    Vector b(5000.0, 100.0);
-    //    Vector c(10000.0, 0.0);
-    //
-    //    Vector a_ = convertNatToGl(a);
-    //    Vector b_ = convertNatToGl(b);
-    //    Vector c_ = convertNatToGl(c);
-    //    glBegin(GL_TRIANGLES);
-    //    glVertex2f(a_.x, a_.y);
-    //    glVertex2f(b_.x, b_.y);
-    //    glVertex2f(c_.x, c_.y);
-    //    glEnd();
-
     glutSwapBuffers(); // Buffercsere: rajzolas vege
 
 }
@@ -296,17 +280,17 @@ void onDisplay() {
 void onKeyboard(unsigned char key, int x, int y) {
     if (key == 'd') glutPostRedisplay(); // d beture rajzold ujra a kepet
     if (key == 't') { //torony áthelyezése
-        printf("->torony athelyezese\n");
+//        printf("->torony athelyezese\n");
     }
 
 }
 
 void onMouse(int button, int state, int x, int y) {
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {// hansel
-        printf("->hansel iranyvalt\n");
+//        printf("->hansel iranyvalt\n");
         glutPostRedisplay(); // Ilyenkor rajzold ujra a kepet
     } else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {// greta
-        printf("->greta iranyvalt\n");
+//        printf("->greta iranyvalt\n");
         glutPostRedisplay(); // Ilyenkor rajzold ujra a kepet
     }
 }
