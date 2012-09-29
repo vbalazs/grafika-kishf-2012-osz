@@ -140,16 +140,24 @@ const int SIGN_HG_CIRCLE_LINE_NUM = 100;
 const int SIGN_HG_CIRCLE_RADIUS = 250;
 const Color COLOR_HANSEL = Color(117.0 / 255, 148.0 / 255, 202.0 / 255);
 const Color COLOR_GRETA = Color(1.0, 160.0 / 255, 180.0 / 255.0);
+const Color COLOR_TOWER = Color(138.0 / 255, 197.0 / 255, 80.0 / 255.0);
 
 Color image[screenWidth*screenHeight];
 Vector centerHansel = Vector(5000, 5000);
 Vector centerGreta = Vector(3000, 3000);
+Vector centerTower = Vector(5000, 7000);
 long time = 0;
 bool working = false;
 
 const bool fequals(float f1, float f2) {
     if (fabs(f1 - f2) < 0.001) return true;
     return false;
+}
+
+unsigned psrnd() {
+    //forrás: levlista
+    static unsigned seed = 2012;
+    return (seed = seed * 199 + 1989) % 100;
 }
 
 const Vector convertPixelsToVariable(const Vector pixel) {
@@ -172,7 +180,7 @@ const Vector convertNatToGl(const Vector natCoord) {
             (natCoord.y - FOREST_WIDTH / 2) * (1.0 / (FOREST_WIDTH / 2)));
 }
 
-void glVertex2Vectors(const Vector vectors[], const int size) {
+void ns_glVertex2Vectors(const Vector vectors[], const int size) {
     for (int i = 0; i < size; i++) {
         glVertex2f(vectors[i].x, vectors[i].y);
     }
@@ -210,7 +218,7 @@ void drawHansel(const Vector natCenter) {
 
     glColor3f(COLOR_HANSEL.r, COLOR_HANSEL.g, COLOR_HANSEL.b);
     glBegin(GL_LINE_LOOP);
-    glVertex2Vectors(circleVectors, SIGN_HG_CIRCLE_LINE_NUM);
+    ns_glVertex2Vectors(circleVectors, SIGN_HG_CIRCLE_LINE_NUM);
     glEnd();
 
     Vector glCoordConnect = convertNatToGl(natCoordConnect);
@@ -221,7 +229,7 @@ void drawHansel(const Vector natCenter) {
     const Vector lineVectors[] = {glCoordConnect, glCoordConnectLineEnd, glCoordConnectLineEnd,
         glCoordArrowLineEnd_1, glCoordConnectLineEnd, glCoordArrowLineEnd_2};
     glBegin(GL_LINES);
-    glVertex2Vectors(lineVectors, 6);
+    ns_glVertex2Vectors(lineVectors, 6);
     glEnd();
 }
 
@@ -244,7 +252,7 @@ void drawGreta(const Vector natCenter) {
 
     glColor3f(COLOR_GRETA.r, COLOR_GRETA.g, COLOR_GRETA.b);
     glBegin(GL_LINE_LOOP);
-    glVertex2Vectors(circleVectors, SIGN_HG_CIRCLE_LINE_NUM);
+    ns_glVertex2Vectors(circleVectors, SIGN_HG_CIRCLE_LINE_NUM);
     glEnd();
 
     Vector glCoordConnect = convertNatToGl(natCoordConnect);
@@ -253,7 +261,20 @@ void drawGreta(const Vector natCenter) {
     Vector glCoordCrossLineEnd = convertNatToGl(Vector(natCoordConnect.x + 150, natCoordConnect.y - 250));
     const Vector lineVectors[] = {glCoordConnect, glCoordConnectLineEnd, glCoordCrossLine, glCoordCrossLineEnd};
     glBegin(GL_LINES);
-    glVertex2Vectors(lineVectors, 4);
+    ns_glVertex2Vectors(lineVectors, 4);
+    glEnd();
+}
+
+void drawTower(const Vector natCenter) {
+
+    glColor3f(COLOR_TOWER.r, COLOR_TOWER.g, COLOR_TOWER.b);
+    Vector glCoordsTower[] = {
+        convertNatToGl(Vector(natCenter.x - 150, natCenter.y - 70)),
+        convertNatToGl(Vector(natCenter.x + 150, natCenter.y - 70)),
+        convertNatToGl(Vector(natCenter.x, natCenter.y + 70))
+    };
+    glBegin(GL_TRIANGLES);
+    ns_glVertex2Vectors(glCoordsTower, 3);
     glEnd();
 }
 
@@ -270,6 +291,7 @@ void onDisplay() {
 
     glDrawPixels(screenWidth, screenHeight, GL_RGB, GL_FLOAT, image);
 
+    drawTower(centerTower);
     drawGreta(centerGreta);
     drawHansel(centerHansel);
 
@@ -279,18 +301,25 @@ void onDisplay() {
 
 void onKeyboard(unsigned char key, int x, int y) {
     if (key == 'd') glutPostRedisplay(); // d beture rajzold ujra a kepet
+    if (key == 'q') exit(0);
     if (key == 't') { //torony áthelyezése
-//        printf("->torony athelyezese\n");
+        srand(psrnd());
+        double r_x = (double) rand() / RAND_MAX;
+        double r_y = (double) rand() / RAND_MAX;
+        centerTower.x = (int) (r_x * FOREST_WIDTH);
+        centerTower.y = (int) (r_y * FOREST_WIDTH);
+        printf("centerTower.x=%f\n", centerTower.x);
+        printf("centerTower.y=%f\n", centerTower.y);
     }
 
 }
 
 void onMouse(int button, int state, int x, int y) {
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {// hansel
-//        printf("->hansel iranyvalt\n");
+        //        printf("->hansel iranyvalt\n");
         glutPostRedisplay(); // Ilyenkor rajzold ujra a kepet
     } else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {// greta
-//        printf("->greta iranyvalt\n");
+        //        printf("->greta iranyvalt\n");
         glutPostRedisplay(); // Ilyenkor rajzold ujra a kepet
     }
 }
