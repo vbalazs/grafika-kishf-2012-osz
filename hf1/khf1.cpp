@@ -133,8 +133,8 @@ struct Color {
 const int screenWidth = 600; // alkalmazás ablak felbontása
 const int screenHeight = 600;
 const int FOREST_WIDTH = 10000;
-const int MIN_HEIGHT = 250;
-const int MAX_HEIGHT = 1014;
+//const int MIN_HEIGHT = 250;
+//const int MAX_HEIGHT = 1014;
 const int TOWER_HEIGHT = 20;
 const int SIGN_HG_CIRCLE_LINE_NUM = 100;
 const int SIGN_HG_CIRCLE_RADIUS = 250;
@@ -285,7 +285,7 @@ void drawTower(const Vector natCenter) {
     glEnd();
 }
 
-void checkAndDoBounce(Vector center, double &angle) {
+void checkAndDoBounce(const Vector center, double &angle) {
     if (center.x < 0 || center.x >= FOREST_WIDTH) {
         angle = M_PI - angle;
     }
@@ -295,11 +295,27 @@ void checkAndDoBounce(Vector center, double &angle) {
     }
 }
 
+const Vector getGradientVarVector(const Vector v) {
+
+    const double x = ((v.y * sin(v.x) * cos(v.x * v.y) + cos(v.x) * sin(v.x * v.y) + 2 * cos(2 * v.x)) * (sin(v.x) * sin(v.x * v.y) + sin(2 * v.x) + cos(3 * v.y))) / fabs(sin(v.x) * sin(v.x * v.y) + sin(2 * v.x) + cos(3 * v.y)); // d/dx f(v)
+    const double y = ((v.x * sin(v.x) * cos(v.x * v.y) - 3 * sin(3 * v.y)) * (sin(v.x) * sin(v.x * v.y) + sin(2 * v.x) + cos(3 * v.y))) / fabs(sin(v.x) * sin(v.x * v.y) + sin(2 * v.x) + cos(3 * v.y)); // d/dy f(v)
+
+    return Vector(x, y);
+}
+
+void stepSign(Vector &center, double &angle, const double deltaT_S) {
+    const Vector gradVector = getGradientVarVector(center);
+    const double m = atan(gradVector.x * cos(angle) * 10 + gradVector.y * sin(angle) * 10);
+    const double speed = BASE_SPEED * (1 - m / 90);
+    center.x = center.x + cos(angle) * speed * deltaT_S;
+    center.y = center.y + sin(angle) * speed * deltaT_S;
+    checkAndDoBounce(center, angle);
+}
+
 void onInitialization() {
     glViewport(0, 0, screenWidth, screenHeight);
 
     ThisEnterpriseMethodGeneratesTheMagicForestSoHeresANotFunnyJoke___I_used_to_be_a_werewolf_But_I_am_much_better_nooooooooooooooooooooooooow();
-
 }
 
 void onDisplay() {
@@ -327,7 +343,6 @@ void onKeyboard(unsigned char key, int x, int y) {
         centerTower.y = (int) (r_y * FOREST_WIDTH);
         printf("centerTower x=%f ; y=%f\n", centerTower.x, centerTower.y);
     }
-
 }
 
 void onMouse(int button, int state, int x, int y) {
@@ -357,24 +372,18 @@ void onMouse(int button, int state, int x, int y) {
 }
 
 void simulateWorld(long tstart, long tend) {
-    float dt = 100;
-    for (float ts = tstart; ts < tend; ts += dt) {
-        float te;
-        if (tend >= ts + dt) {
-            te = ts + dt;
+    const static double DT_MS = 100;
+    const static double DT_S = DT_MS / 1000;
+    float te;
+    for (float ts = tstart; ts < tend; ts += DT_MS) {
+        if (tend >= ts + DT_MS) {
+            te = ts + DT_MS;
         } else {
             te = tend;
         }
 
-        //Hansel leptetese v sebesseggel (t=100ms!)
-        centerHansel.x = centerHansel.x + cos(angleHansel) * BASE_SPEED * 0.1; //TODO: s/BASE_SPEED/v
-        centerHansel.y = centerHansel.y + sin(angleHansel) * BASE_SPEED * 0.1;
-        checkAndDoBounce(centerHansel, angleHansel);
-
-        //Greta leptetese v sebesseggel (t=100ms!)
-        centerGreta.x = centerGreta.x + cos(angleGreta) * BASE_SPEED * 0.1;
-        centerGreta.y = centerGreta.y + sin(angleGreta) * BASE_SPEED * 0.1;
-        checkAndDoBounce(centerGreta, angleGreta);
+        stepSign(centerHansel, angleHansel, DT_S);
+        stepSign(centerGreta, angleGreta, DT_S);
     }
 }
 
