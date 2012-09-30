@@ -140,12 +140,19 @@ const int SIGN_HG_CIRCLE_LINE_NUM = 100;
 const int SIGN_HG_CIRCLE_RADIUS = 250;
 const Color COLOR_HANSEL = Color(117.0 / 255, 148.0 / 255, 202.0 / 255);
 const Color COLOR_GRETA = Color(1.0, 160.0 / 255, 180.0 / 255.0);
-const Color COLOR_TOWER = Color(138.0 / 255, 197.0 / 255, 80.0 / 255.0);
+const Color COLOR_TOWER = Color(1.0, 1.0, 0.0);
+const int BASE_SPEED = 1000;
 
 Color image[screenWidth*screenHeight];
 Vector centerHansel = Vector(5000, 5000);
 Vector centerGreta = Vector(3000, 3000);
 Vector centerTower = Vector(5000, 7000);
+
+Vector clickHansel;
+double angleHansel = 0.0;
+Vector clickGreta;
+double angleGreta = 0.0;
+
 long time = 0;
 bool working = false;
 
@@ -278,6 +285,16 @@ void drawTower(const Vector natCenter) {
     glEnd();
 }
 
+void checkAndDoBounce(Vector center, double &angle) {
+    if (center.x < 0 || center.x >= FOREST_WIDTH) {
+        angle = M_PI - angle;
+    }
+
+    if (center.y < 0 || center.y >= FOREST_WIDTH) {
+        angle *= -1.0;
+    }
+}
+
 void onInitialization() {
     glViewport(0, 0, screenWidth, screenHeight);
 
@@ -308,24 +325,39 @@ void onKeyboard(unsigned char key, int x, int y) {
         double r_y = (double) rand() / RAND_MAX;
         centerTower.x = (int) (r_x * FOREST_WIDTH);
         centerTower.y = (int) (r_y * FOREST_WIDTH);
-        printf("centerTower.x=%f\n", centerTower.x);
-        printf("centerTower.y=%f\n", centerTower.y);
+        printf("centerTower x=%f ; y=%f\n", centerTower.x, centerTower.y);
     }
 
 }
 
 void onMouse(int button, int state, int x, int y) {
-    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {// hansel
-        //        printf("->hansel iranyvalt\n");
-        glutPostRedisplay(); // Ilyenkor rajzold ujra a kepet
-    } else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {// greta
-        //        printf("->greta iranyvalt\n");
-        glutPostRedisplay(); // Ilyenkor rajzold ujra a kepet
+    if (button == GLUT_LEFT && state == GLUT_DOWN) {
+        clickHansel.x = ((double) x / screenWidth) * FOREST_WIDTH;
+        clickHansel.y = FOREST_WIDTH - ((double) y / screenWidth) * FOREST_WIDTH;
+
+        Vector dirHansel(clickHansel.x - centerHansel.x, clickHansel.y - centerHansel.y);
+        angleHansel = atan(dirHansel.y / dirHansel.x);
+
+        if (clickHansel.x < centerHansel.x) {
+            angleHansel += M_PI;
+        }
+    } else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
+        clickGreta.x = ((double) x / screenWidth) * FOREST_WIDTH;
+        clickGreta.y = FOREST_WIDTH - ((double) y / screenWidth) * FOREST_WIDTH;
+
+        Vector dirGreta(clickGreta.x - centerGreta.x, clickGreta.y - centerGreta.y);
+        angleGreta = atan(dirGreta.y / dirGreta.x);
+
+        if (clickGreta.x < centerGreta.x) {
+            angleGreta += M_PI;
+        }
     }
+
+    glutPostRedisplay(); // Ilyenkor rajzold ujra a kepet
 }
 
 void simulateWorld(long tstart, long tend) {
-    float dt = 50;
+    float dt = 100;
     for (float ts = tstart; ts < tend; ts += dt) {
         float te;
         if (tend >= ts + dt) {
@@ -334,7 +366,15 @@ void simulateWorld(long tstart, long tend) {
             te = tend;
         }
 
-        //do stuff
+        //Hansel leptetese v sebesseggel (t=100ms!)
+        centerHansel.x = centerHansel.x + cos(angleHansel) * BASE_SPEED * 0.1; //TODO: s/BASE_SPEED/v
+        centerHansel.y = centerHansel.y + sin(angleHansel) * BASE_SPEED * 0.1;
+        checkAndDoBounce(centerHansel, angleHansel);
+
+        //Greta leptetese v sebesseggel (t=100ms!)
+        centerGreta.x = centerGreta.x + cos(angleGreta) * BASE_SPEED * 0.1;
+        centerGreta.y = centerGreta.y + sin(angleGreta) * BASE_SPEED * 0.1;
+        checkAndDoBounce(centerGreta, angleGreta);
     }
 }
 
@@ -347,8 +387,9 @@ void onIdle() {
         simulateWorld(old_time, time);
 
         working = false;
-        glutPostRedisplay();
     }
+
+    glutPostRedisplay();
 }
 
 // ...Idaig modosithatod
