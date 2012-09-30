@@ -133,6 +133,8 @@ struct Color {
 const int screenWidth = 600; // alkalmazás ablak felbontása
 const int screenHeight = 600;
 const int FOREST_WIDTH = 10000;
+const int MIN_HEIGHT = 250;
+const int MAX_HEIGHT = 1014;
 const int TOWER_HEIGHT = 20;
 const int SIGN_HG_CIRCLE_LINE_NUM = 100;
 const int SIGN_HG_CIRCLE_RADIUS = 250;
@@ -151,6 +153,7 @@ double angleHansel = 0.0;
 double angleGreta = 0.0;
 
 long time = 0;
+bool isCovered = false;
 bool working = false;
 
 const bool fequals(float f1, float f2) {
@@ -166,6 +169,11 @@ unsigned psrnd() {
 
 const Vector convertPixelsToVariable(const Vector pixel) {
     return Vector((double) pixel.x / 100.0, (double) pixel.y / 100.0);
+}
+
+const Vector convertNatToPixel(const Vector natVector) {
+    return Vector((int) (screenWidth * (natVector.x / FOREST_WIDTH)),
+            (int) (screenWidth * (natVector.y / FOREST_WIDTH)));
 }
 
 const double calculateHeightValue(const Vector varVector) {
@@ -339,17 +347,19 @@ void onInitialization() {
 }
 
 void onDisplay() {
-    glClearColor(0.1f, 0.2f, 0.3f, 1.0f); // torlesi szin beallitasa
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // kepernyo torles
+    glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glDrawPixels(screenWidth, screenHeight, GL_RGB, GL_FLOAT, image);
 
     drawTower(centerTower);
     drawGreta(centerGreta);
     drawHansel(centerHansel);
-    drawCoverage();
+    if (isCovered) {
+        drawCoverage();
+    }
 
-    glutSwapBuffers(); // Buffercsere: rajzolas vege
+    glutSwapBuffers();
 
 }
 
@@ -372,7 +382,42 @@ void onMouse(int button, int state, int x, int y) {
         changeDirection(centerGreta, angleGreta, x, y);
     }
 
-    glutPostRedisplay(); // Ilyenkor rajzold ujra a kepet
+    glutPostRedisplay();
+}
+
+void calcCoverage() {
+    const double towerHeightPlus = (2.0 / (MAX_HEIGHT - MIN_HEIGHT)) * TOWER_HEIGHT;
+
+    isCovered = true;
+    centerHansel.z = calculateHeightValueFromPixel(convertNatToPixel(centerHansel));
+    centerGreta.z = calculateHeightValueFromPixel(convertNatToPixel(centerGreta));
+
+    centerTower.z = calculateHeightValueFromPixel(convertNatToPixel(centerTower));
+    centerTower.z += towerHeightPlus;
+
+    for (double t = 0.0; t < 1; t += 0.01) {
+        const double x = centerHansel.x * t + centerTower.x * (1 - t);
+        const double y = centerHansel.y * t + centerTower.y * (1 - t);
+
+        const double z = centerHansel.z * t + centerTower.z * (1 - t);
+        const double height = calculateHeightValueFromPixel(convertNatToPixel(Vector(x, y)));
+
+        if (z < height) {
+            isCovered = false;
+            break;
+        } else {
+            const double x = centerGreta.x * t + centerTower.x * (1 - t);
+            const double y = centerGreta.y * t + centerTower.y * (1 - t);
+
+            const double z = centerGreta.z * t + centerTower.z * (1 - t);
+            const double height = calculateHeightValueFromPixel(convertNatToPixel(Vector(x, y)));
+
+            if (z < height) {
+                isCovered = false;
+                break;
+            }
+        }
+    }
 }
 
 void simulateWorld(long tstart, long tend) {
@@ -388,6 +433,8 @@ void simulateWorld(long tstart, long tend) {
 
         stepSign(centerHansel, angleHansel, DT_S);
         stepSign(centerGreta, angleGreta, DT_S);
+
+        calcCoverage();
     }
 }
 
