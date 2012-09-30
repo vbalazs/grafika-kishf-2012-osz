@@ -130,7 +130,7 @@ struct Color {
     }
 };
 
-const int screenWidth = 600; // alkalmazás ablak felbontása
+const int screenWidth = 600;
 const int screenHeight = 600;
 const int FOREST_WIDTH = 10000;
 const int MIN_HEIGHT = 250;
@@ -162,7 +162,7 @@ const bool fequals(float f1, float f2) {
 }
 
 unsigned psrnd() {
-    //forrás: levlista
+    //forras: levlista
     static unsigned seed = 2012;
     return (seed = seed * 199 + 1989) % 100;
 }
@@ -364,9 +364,9 @@ void onDisplay() {
 }
 
 void onKeyboard(unsigned char key, int x, int y) {
-    if (key == 'd') glutPostRedisplay(); // d beture rajzold ujra a kepet
+    if (key == 'd') glutPostRedisplay();
     if (key == 'q') exit(0);
-    if (key == 't') { //torony áthelyezése
+    if (key == 't') {
         srand(psrnd());
         double r_x = (double) rand() / RAND_MAX;
         double r_y = (double) rand() / RAND_MAX;
@@ -386,7 +386,7 @@ void onMouse(int button, int state, int x, int y) {
 }
 
 void calcCoverage() {
-    const double towerHeightPlus = (2.0 / (MAX_HEIGHT - MIN_HEIGHT)) * TOWER_HEIGHT;
+    const static double towerHeightPlus = (2.0 / (MAX_HEIGHT - MIN_HEIGHT)) * TOWER_HEIGHT;
 
     isCovered = true;
     centerHansel.z = calculateHeightValueFromPixel(convertNatToPixel(centerHansel));
@@ -435,6 +435,8 @@ void simulateWorld(long tstart, long tend) {
         stepSign(centerGreta, angleGreta, DT_S);
 
         calcCoverage();
+
+        //calc coverage time %
     }
 }
 
