@@ -53,7 +53,6 @@
 #include <GL/glu.h>
 // A GLUT-ot le kell tolteni: http://www.opengl.org/resources/libraries/glut/
 #include <GL/glut.h>
-//#include <stdio.h>
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Innentol modosithatod...
@@ -153,8 +152,8 @@ double angleHansel = 0.0;
 double angleGreta = 0.0;
 
 long time = 0;
+long timeCovered = 0;
 bool isCovered = false;
-bool working = false;
 
 const bool fequals(float f1, float f2) {
     if (fabs(f1 - f2) < 0.001) return true;
@@ -300,6 +299,25 @@ void drawCoverage() {
     glEnd();
 }
 
+void drawCoverageBar() {
+    double coveredFragment = (double) timeCovered / time;
+    Vector glCoveredBarWidth = convertNatToGl(Vector(coveredFragment * FOREST_WIDTH, 0));
+
+    glColor3f(0.8, 0.8, 0.8);
+    glBegin(GL_QUADS);
+    glVertex2f(-1.0, 1.0);
+    glVertex2f(1.0, 1.0);
+    glVertex2f(1.0, 0.94);
+    glVertex2f(-1.0, 0.94);
+
+    glColor3f(0.0, 0.90, 0.0);
+    glVertex2f(-1.0, 1.0);
+    glVertex2f(glCoveredBarWidth.x, 1.0);
+    glVertex2f(glCoveredBarWidth.x, 0.94);
+    glVertex2f(-1.0, 0.94);
+    glEnd();
+}
+
 void checkAndDoBounce(const Vector center, double &angle) {
     if (center.x < 0 || center.x >= FOREST_WIDTH) {
         angle = M_PI - angle;
@@ -351,6 +369,7 @@ void onDisplay() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glDrawPixels(screenWidth, screenHeight, GL_RGB, GL_FLOAT, image);
+    drawCoverageBar();
 
     drawTower(centerTower);
     drawGreta(centerGreta);
@@ -436,20 +455,17 @@ void simulateWorld(long tstart, long tend) {
 
         calcCoverage();
 
-        //calc coverage time %
+        if (isCovered) {
+            timeCovered += DT_MS;
+        }
     }
 }
 
 void onIdle() {
-    if (!working) {
-        working = true;
-        long old_time = time;
-        time = glutGet(GLUT_ELAPSED_TIME);
+    long old_time = time;
+    time = glutGet(GLUT_ELAPSED_TIME);
 
-        simulateWorld(old_time, time);
-
-        working = false;
-    }
+    simulateWorld(old_time, time);
 
     glutPostRedisplay();
 }
