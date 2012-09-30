@@ -153,6 +153,7 @@ double angleGreta = 0.0;
 
 long time = 0;
 long timeCovered = 0;
+long timeTmp = 0;
 bool isCovered = false;
 
 const bool fequals(float f1, float f2) {
@@ -440,23 +441,20 @@ void calcCoverage() {
 }
 
 void simulateWorld(long tstart, long tend) {
-    const static double DT_MS = 100;
-    const static double DT_S = DT_MS / 1000;
-    float te;
-    for (float ts = tstart; ts < tend; ts += DT_MS) {
-        if (tend >= ts + DT_MS) {
-            te = ts + DT_MS;
-        } else {
-            te = tend;
-        }
+    const static double DT_100MS = 100;
+    timeTmp += tend - tstart;
 
-        stepSign(centerHansel, angleHansel, DT_S);
-        stepSign(centerGreta, angleGreta, DT_S);
+    if (timeTmp >= DT_100MS) {
+        for (long ts = timeTmp; timeTmp > 0; timeTmp -= DT_100MS) {
 
-        calcCoverage();
+            stepSign(centerHansel, angleHansel, DT_100MS / 1000);
+            stepSign(centerGreta, angleGreta, DT_100MS / 1000);
 
-        if (isCovered) {
-            timeCovered += DT_MS;
+            calcCoverage();
+
+            if (isCovered) {
+                timeCovered += DT_100MS;
+            }
         }
     }
 }
