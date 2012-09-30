@@ -53,7 +53,7 @@
 #include <GL/glu.h>
 // A GLUT-ot le kell tolteni: http://www.opengl.org/resources/libraries/glut/
 #include <GL/glut.h>
-#include <stdio.h>
+//#include <stdio.h>
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Innentol modosithatod...
@@ -133,14 +133,13 @@ struct Color {
 const int screenWidth = 600; // alkalmazás ablak felbontása
 const int screenHeight = 600;
 const int FOREST_WIDTH = 10000;
-//const int MIN_HEIGHT = 250;
-//const int MAX_HEIGHT = 1014;
 const int TOWER_HEIGHT = 20;
 const int SIGN_HG_CIRCLE_LINE_NUM = 100;
 const int SIGN_HG_CIRCLE_RADIUS = 250;
 const Color COLOR_HANSEL = Color(117.0 / 255, 148.0 / 255, 202.0 / 255);
 const Color COLOR_GRETA = Color(1.0, 160.0 / 255, 180.0 / 255.0);
 const Color COLOR_TOWER = Color(1.0, 1.0, 0.0);
+const Color COLOR_COVERAGE = Color(1.0, 0.0, 0.0);
 const int BASE_SPEED = 1000;
 
 Color image[screenWidth*screenHeight];
@@ -148,9 +147,7 @@ Vector centerHansel = Vector(5000, 5000);
 Vector centerGreta = Vector(3000, 3000);
 Vector centerTower = Vector(5000, 7000);
 
-Vector clickHansel;
 double angleHansel = 0.0;
-Vector clickGreta;
 double angleGreta = 0.0;
 
 long time = 0;
@@ -285,6 +282,16 @@ void drawTower(const Vector natCenter) {
     glEnd();
 }
 
+void drawCoverage() {
+    Vector points[] = {convertNatToGl(centerGreta), convertNatToGl(centerHansel),
+        convertNatToGl(centerTower)};
+
+    glColor3f(COLOR_COVERAGE.r, COLOR_COVERAGE.g, COLOR_COVERAGE.b);
+    glBegin(GL_TRIANGLES);
+    ns_glVertex2Vectors(points, 3);
+    glEnd();
+}
+
 void checkAndDoBounce(const Vector center, double &angle) {
     if (center.x < 0 || center.x >= FOREST_WIDTH) {
         angle = M_PI - angle;
@@ -312,6 +319,19 @@ void stepSign(Vector &center, double &angle, const double deltaT_S) {
     checkAndDoBounce(center, angle);
 }
 
+void changeDirection(const Vector center, double &angle, const int clickX, const int clickY) {
+    Vector clickNat;
+    clickNat.x = ((double) clickX / screenWidth) * FOREST_WIDTH;
+    clickNat.y = FOREST_WIDTH - ((double) clickY / screenWidth) * FOREST_WIDTH;
+
+    Vector dir(clickNat.x - center.x, clickNat.y - center.y);
+    angle = atan(dir.y / dir.x);
+
+    if (clickNat.x < center.x) {
+        angle += M_PI;
+    }
+}
+
 void onInitialization() {
     glViewport(0, 0, screenWidth, screenHeight);
 
@@ -327,6 +347,7 @@ void onDisplay() {
     drawTower(centerTower);
     drawGreta(centerGreta);
     drawHansel(centerHansel);
+    drawCoverage();
 
     glutSwapBuffers(); // Buffercsere: rajzolas vege
 
@@ -341,31 +362,14 @@ void onKeyboard(unsigned char key, int x, int y) {
         double r_y = (double) rand() / RAND_MAX;
         centerTower.x = (int) (r_x * FOREST_WIDTH);
         centerTower.y = (int) (r_y * FOREST_WIDTH);
-        printf("centerTower x=%f ; y=%f\n", centerTower.x, centerTower.y);
     }
 }
 
 void onMouse(int button, int state, int x, int y) {
     if (button == GLUT_LEFT && state == GLUT_DOWN) {
-        clickHansel.x = ((double) x / screenWidth) * FOREST_WIDTH;
-        clickHansel.y = FOREST_WIDTH - ((double) y / screenWidth) * FOREST_WIDTH;
-
-        Vector dirHansel(clickHansel.x - centerHansel.x, clickHansel.y - centerHansel.y);
-        angleHansel = atan(dirHansel.y / dirHansel.x);
-
-        if (clickHansel.x < centerHansel.x) {
-            angleHansel += M_PI;
-        }
+        changeDirection(centerHansel, angleHansel, x, y);
     } else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
-        clickGreta.x = ((double) x / screenWidth) * FOREST_WIDTH;
-        clickGreta.y = FOREST_WIDTH - ((double) y / screenWidth) * FOREST_WIDTH;
-
-        Vector dirGreta(clickGreta.x - centerGreta.x, clickGreta.y - centerGreta.y);
-        angleGreta = atan(dirGreta.y / dirGreta.x);
-
-        if (clickGreta.x < centerGreta.x) {
-            angleGreta += M_PI;
-        }
+        changeDirection(centerGreta, angleGreta, x, y);
     }
 
     glutPostRedisplay(); // Ilyenkor rajzold ujra a kepet
