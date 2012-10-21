@@ -1,0 +1,20 @@
+Középfölde királya új görbét talált fel, amit szerénytelenül KK-spline-nak 
+nevezett el.
+
+A következőképpen okoskodott: Minden egymás követő három vezérlőpontra egy 
+másodfokú paraméteres görbét illesztünk, így két vezérlőpont között, 
+a legelső és legutolsó párt kivéve, mindig két másodfokú paraméteres 
+görbe látható, amelyek legyenek A és B. Egy másodfokú paraméteres görbe 
+három pontját rendre kezdő, középső és megint kezdő pontnak hívjuk. 
+Két vezérlőpont között az egyik vezérlőpont az A görbének a középső 
+pontja a B görbének pedig a kezdő pontja. 
+A másik vezérlőpont ugyanakkor a B görbének a középső pontja és az A kezdőpontja. 
+A két görbeívből csináljunk egyetlen görbét konvex kombinációval úgy, 
+hogy a középső pontban a másodfokú paraméteres görbe súlya 1, a kezdő, 
+illetve végpontban pedig 0, közöttük pedig lineárisan változik.
+
+Középfölde királya szeretné, ha a görbéje kiszorítaná a Catmull-Rom spline-t, 
+ezért Önt kérte meg, hogy egy rajzolóprogramot írjon, 
+demonstrálandó találmánya nagyszerűségét.
+
+A rajzolóprogram a világot 0..1000 x 0..1000 mm-es négyzetben tárolja (ez felelne meg Powerpoint-ban a slide-nak), ezen kívül nem lehet rajzolni. Kezdetben a kameraablak bal alsó sarka a világ (100,100) koordinátájú pontjában van, a jobb-felső sarka pedig az (500,500) pontban. A rajzolóprogram az egér bal gomb lenyomására egy-egy újabb kontrollpontot vesz fel. A vezérlőpontok maximális száma 100. A vezérpontokhoz rendelt paraméterértékek tetszőleges olyan növekvő sorozatot alkothatnak, amelyben a növekmény az összes korábbitól különböző (pl. nem jó: 0,1,2,...; jó: 1, 2, 4, 7...). A kontrollpontokra KK-spline-t, és az összehasonlítás érdekében Catmull-Rom spline-t illeszt a program, és a teljes paramétertartományt 1000 részre osztva vektorizál, majd töröttvonalként rajzolja fel a két görbét. A KK-spline piros színben, a Catmull-Rom spline zöldben jelenik meg, ahol takarnák egymást, ott a KK-spline-nak van prioritása. Az egér jobb billentyűjének lenyomásával a görbéket ki lehet választani. Akkor választunk ki egy görbét, ha a vektorizált töröttvonal a kurzor körüli 5x5 pixel méretű négyzetet átmetszi. Ha egyszerre választjuk ki a KK-spline-t és a Catmull-Rom spline-t, akkor a KK-spline-nak van prioritása. Az egér jobb gomb újbóli lenyomása a kiválasztott görbét a két jobb klikk közötti elmozdulásnak megfelelően eltolja. A világba belezoomolni a z betű lenyomásával lehet, amikor a kurzor jelenlegi helye nem mozdul el, de a kamera ablak a zoom előtti mérethez képest tized akkorára esik össze, azaz a világ elemei a korábbihoz képest tízszer nagyobbnak fognak látszódni. Egymás után többször is lehet belezoomolni, amikor egyre nagyobb nagyítás érhető el. A kizoomolás művelet nem kötelező műsorszám, de igény esetén Z betűre megvalósítható.
