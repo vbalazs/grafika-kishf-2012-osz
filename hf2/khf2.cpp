@@ -73,19 +73,19 @@ using namespace std;
 //--------------------------------------------------------
 
 struct Vector {
-    float x, y, z;
+    double x, y, z;
 
     Vector() {
         x = y = z = 0;
     }
 
-    Vector(float x0, float y0, float z0 = 0) {
+    Vector(double x0, double y0, double z0 = 0) {
         x = x0;
         y = y0;
         z = z0;
     }
 
-    Vector operator*(float a) {
+    Vector operator*(double a) {
         return Vector(x * a, y * a, z * a);
     }
 
@@ -97,7 +97,7 @@ struct Vector {
         return Vector(x - v.x, y - v.y, z - v.z);
     }
 
-    float operator*(const Vector & v) { // dot product
+    double operator*(const Vector & v) { // dot product
         return (x * v.x + y * v.y + z * v.z);
     }
 
@@ -105,7 +105,7 @@ struct Vector {
         return Vector(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x);
     }
 
-    float Length() {
+    double Length() {
         return sqrt(x * x + y * y + z * z);
     }
 };
@@ -145,6 +145,9 @@ const int screenHeight = 600;
 
 const int VIRT_WIDTH = 1000; //1000mm
 const int MAX_NR_OF_CTRPs = 100; //number of control points
+
+Vector virtcam_bottom_left = Vector(100.0, 100.0);
+Vector virtcam_top_right = Vector(500.0, 500.0);
 
 const Color COLOR_CR = Color(0.0, 1.0, 0.0);
 const Color COLOR_KK = Color(1.0, 0.0, 0.0);
@@ -208,7 +211,7 @@ public:
         glColor3f(COLOR_CR.r, COLOR_CR.g, COLOR_CR.b);
         glBegin(GL_LINE_STRIP);
         for (int i = 1; i < numOfPoints - 2; ++i) {
-            double rate = (fibonacci[i + 1] - fibonacci[i]) / 100.0;
+            double rate = (fibonacci[i + 1] - fibonacci[i]) / 1000.0;
             for (double t = fibonacci[i]; t < fibonacci[i + 1]; t += rate) {
                 Vector v = CatmullRomMagic(t, i);
                 glVertex2f(v.x, v.y);
@@ -217,12 +220,13 @@ public:
         }
         glEnd();
 
+        const double point_marker_size = (virtcam_top_right.x - virtcam_bottom_left.x) / 200;
         glBegin(GL_TRIANGLES);
         glColor3f(0.0, 0.0, 1.0);
         for (int i = 0; i < numOfPoints; i++) {
             glVertex2f(ctrlPoints[i].x, ctrlPoints[i].y);
-            glVertex2f(ctrlPoints[i].x - 1, ctrlPoints[i].y - 1);
-            glVertex2f(ctrlPoints[i].x + 1, ctrlPoints[i].y - 1);
+            glVertex2f(ctrlPoints[i].x - point_marker_size, ctrlPoints[i].y - point_marker_size);
+            glVertex2f(ctrlPoints[i].x + point_marker_size, ctrlPoints[i].y - point_marker_size);
         }
         glEnd();
     }
@@ -240,9 +244,6 @@ public:
 
 CurveManager curveManager;
 
-Vector virtcam_bottom_left = Vector(100, 100);
-Vector virtcam_top_right = Vector(500, 500);
-
 /*
  * Binet form
  * Forras: [1]
@@ -258,8 +259,8 @@ const double getFibonacciNr(int n) {
 Vector getWorldCoordsFromPixels(const int px_x, const int px_y) {
     const double width = virtcam_top_right.x - virtcam_bottom_left.x;
 
-    return Vector(virtcam_bottom_left.x + (width / screenWidth) * px_x,
-            virtcam_bottom_left.y + (width - (width / screenWidth) * px_y));
+    return Vector(virtcam_bottom_left.x + (width / (double) screenWidth) * px_x,
+            virtcam_bottom_left.y + (width - (width / (double) screenWidth) * px_y));
 }
 
 const bool fequals(const float f1, const float f2) {
@@ -295,37 +296,37 @@ void onKeyboard(unsigned char key, int x, int y) {
     if (key == 'd') glutPostRedisplay();
     if (key == 'q') exit(0);
 
-    if (key == 'z') { //zoom in
-        virtcam_bottom_left.x /= 10.0;
-        virtcam_bottom_left.y /= 10.0;
+    const double width = virtcam_top_right.x - virtcam_bottom_left.x;
 
-        virtcam_top_right.x /= 10.0;
-        virtcam_top_right.y /= 10.0;
+    if (key == 'z') { //zoom in
+        const double change = (width - width / 10.0) / 2.0;
+
+        virtcam_bottom_left.x += change;
+        virtcam_bottom_left.y += change;
+
+        virtcam_top_right.x -= change;
+        virtcam_top_right.y -= change;
 
         glLoadIdentity();
         gluOrtho2D(virtcam_bottom_left.x, //left
                 virtcam_top_right.x, //right
                 virtcam_bottom_left.y, //bottom
                 virtcam_top_right.y); //top
-
-        cout << "INFO: zoomed in. bottom_left(x&y) = " << virtcam_bottom_left.x
-                << " ; top_right(x&y) = " << virtcam_top_right.x << endl;
 
     } else if (key == 'Z') { //zoom out
-        virtcam_bottom_left.x *= 10.0;
-        virtcam_bottom_left.y *= 10.0;
+        const double change = width / 2.0 * 10.0 - width / 2.0;
 
-        virtcam_top_right.x *= 10.0;
-        virtcam_top_right.y *= 10.0;
+        virtcam_bottom_left.x -= change;
+        virtcam_bottom_left.y -= change;
+
+        virtcam_top_right.x += change;
+        virtcam_top_right.y += change;
 
         glLoadIdentity();
         gluOrtho2D(virtcam_bottom_left.x, //left
                 virtcam_top_right.x, //right
                 virtcam_bottom_left.y, //bottom
                 virtcam_top_right.y); //top
-
-        cout << "INFO: zoomed out. bottom_left(x&y) = " << virtcam_bottom_left.x
-                << " ; top_right(x&y) = " << virtcam_top_right.x << endl;
     }
 }
 
