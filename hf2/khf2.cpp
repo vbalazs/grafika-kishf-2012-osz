@@ -53,6 +53,8 @@
 #include <GL/glu.h>
 // A GLUT-ot le kell tolteni: http://www.opengl.org/resources/libraries/glut/
 #include <GL/glut.h>
+#include <iostream>
+using namespace std;
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Innentol modosithatod...
@@ -133,17 +135,15 @@ const int screenWidth = 600;
 const int screenHeight = 600;
 
 const int VIRT_WIDTH = 1000; //1000mm
-const Vector VIRTCAM_BOTTOM_LEFT = Vector(100, 100);
-const Vector VIRTCAM_TOP_RIGHT = Vector(500, 500);
-
 const int NR_OF_CTRPs = 100; //number of control points
+
+Vector virtcam_bottom_left = Vector(100, 100);
+Vector virtcam_top_right = Vector(500, 500);
 
 //fibonacci
 double fibonacci[NR_OF_CTRPs];
 
 Color image[screenWidth*screenHeight];
-
-long time = 0;
 
 /*
  * Binet form
@@ -168,13 +168,11 @@ void ns_glVertex2Vectors(const Vector vectors[], const int size) {
 
 void onInitialization() {
     glViewport(0, 0, screenWidth, screenHeight);
-
     glLoadIdentity();
-
-    gluOrtho2D(VIRTCAM_BOTTOM_LEFT.x, //left
-            VIRTCAM_TOP_RIGHT.x, //right
-            VIRTCAM_BOTTOM_LEFT.y, //bottom
-            VIRTCAM_TOP_RIGHT.y); //top
+    gluOrtho2D(virtcam_bottom_left.x, //left
+            virtcam_top_right.x, //right
+            virtcam_bottom_left.y, //bottom
+            virtcam_top_right.y); //top
 
     //fill up array with fibonacci numbers - Binet form
     for (int i = 2; i <= NR_OF_CTRPs; i++) {
@@ -186,10 +184,6 @@ void onDisplay() {
     glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glDrawPixels(screenWidth, screenHeight, GL_RGB, GL_FLOAT, image);
-
-    //draw
-
     glutSwapBuffers();
 
 }
@@ -197,6 +191,39 @@ void onDisplay() {
 void onKeyboard(unsigned char key, int x, int y) {
     if (key == 'd') glutPostRedisplay();
     if (key == 'q') exit(0);
+
+    if (key == 'z') { //zoom in
+        virtcam_bottom_left.x /= 10.0;
+        virtcam_bottom_left.y /= 10.0;
+
+        virtcam_top_right.x /= 10.0;
+        virtcam_top_right.y /= 10.0;
+
+        glLoadIdentity();
+        gluOrtho2D(virtcam_bottom_left.x, //left
+                virtcam_top_right.x, //right
+                virtcam_bottom_left.y, //bottom
+                virtcam_top_right.y); //top
+
+        cout << "INFO: zoomed in. bottom_left(x&y) = " << virtcam_bottom_left.x
+                << " ; top_right(x&y) = " << virtcam_top_right.x << endl;
+
+    } else if (key == 'Z') { //zoom out
+        virtcam_bottom_left.x *= 10.0;
+        virtcam_bottom_left.y *= 10.0;
+
+        virtcam_top_right.x *= 10.0;
+        virtcam_top_right.y *= 10.0;
+
+        glLoadIdentity();
+        gluOrtho2D(virtcam_bottom_left.x, //left
+                virtcam_top_right.x, //right
+                virtcam_bottom_left.y, //bottom
+                virtcam_top_right.y); //top
+
+        cout << "INFO: zoomed out. bottom_left(x&y) = " << virtcam_bottom_left.x
+                << " ; top_right(x&y) = " << virtcam_top_right.x << endl;
+    }
 }
 
 void onMouse(int button, int state, int x, int y) {
@@ -207,31 +234,7 @@ void onMouse(int button, int state, int x, int y) {
     glutPostRedisplay();
 }
 
-void simulateWorld(long tstart, long tend) {
-    const static double DT_100MS = 100;
-    //    timeTmp += tend - tstart;
-    //
-    //    if (timeTmp >= DT_100MS) {
-    //        for (long ts = timeTmp; timeTmp > 0; timeTmp -= DT_100MS) {
-    //
-    //            stepSign(centerHansel, angleHansel, DT_100MS / 1000);
-    //            stepSign(centerGreta, angleGreta, DT_100MS / 1000);
-    //
-    //            calcCoverage();
-    //
-    //            if (isCovered) {
-    //                timeCovered += DT_100MS;
-    //            }
-    //        }
-    //    }
-}
-
 void onIdle() {
-    long old_time = time;
-    time = glutGet(GLUT_ELAPSED_TIME);
-
-    simulateWorld(old_time, time);
-
     glutPostRedisplay();
 }
 
