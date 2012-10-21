@@ -61,6 +61,8 @@ using namespace std;
  * [1]: tavalyi 2. házim: https://github.com/vbalazs/grafika-kishf-2012-tavasz/
  * [2]: On-Line Geometric Modeling Notes - CATMULL-ROM SPLINES(Kenneth I. Joy,
  * Visualization and Graphics Research Group, Department of Computer Science, University of California, Davis)
+ * [3]: Dr. Szirmay-Kalos László, Antal György, Csonka Ferenc 
+ *              - Háromdimenziós Grafika, animáció és játékfejlesztés, 2004 - Computerbooks, Budapest
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -157,7 +159,7 @@ class CurveManager {
 private:
 
     /**
-     * Forrás: [2] alapján
+     * Forrás: [2] és [3] alapján
      */
     Vector CatmullRomMagic(double t, int i) {
         Vector a, b, c, d;
