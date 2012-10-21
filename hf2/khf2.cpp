@@ -56,6 +56,13 @@
 #include <iostream>
 using namespace std;
 
+/**
+ * Források:
+ * [1]: tavalyi 2. házim: https://github.com/vbalazs/grafika-kishf-2012-tavasz/
+ * [2]: On-Line Geometric Modeling Notes - CATMULL-ROM SPLINES(Kenneth I. Joy,
+ * Visualization and Graphics Research Group, Department of Computer Science, University of California, Davis)
+ */
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Innentol modosithatod...
 
@@ -135,35 +142,127 @@ const int screenWidth = 600;
 const int screenHeight = 600;
 
 const int VIRT_WIDTH = 1000; //1000mm
-const int NR_OF_CTRPs = 100; //number of control points
+const int MAX_NR_OF_CTRPs = 100; //number of control points
+
+const Color COLOR_CR = Color(0.0, 1.0, 0.0);
+const Color COLOR_KK = Color(1.0, 0.0, 0.0);
+
+//fibonacci
+double fibonacci[MAX_NR_OF_CTRPs];
+
+/**
+ * Forrás: [1], átalakítva
+ */
+class CurveManager {
+private:
+
+    /**
+     * Forrás: [2] alapján
+     */
+    Vector CatmullRomMagic(double t, int i) {
+        Vector a, b, c, d;
+
+        double t_i = fibonacci[i];
+        double t_i_plus_1 = fibonacci[i + 1];
+        double t_i_plus_2 = fibonacci[i + 2];
+        double t_i_minus_1 = fibonacci[i - 1];
+
+        Vector f_i = ctrlPoints[i];
+        Vector f_i_plus_1 = ctrlPoints[i + 1];
+        Vector f_i_plus_2 = ctrlPoints[i + 2];
+        Vector f_i_minus_1 = ctrlPoints[i - 1];
+
+        Vector v_i = ((f_i - f_i_minus_1) * (1 / (t_i - t_i_minus_1)) +
+                (f_i_plus_1 - f_i) * (1 / (t_i_plus_1 - t_i))) * 0.5;
+
+        Vector v_i_plus_1 = ((f_i_plus_1 - f_i) * (1 / (t_i_plus_1 - t_i)) +
+                (f_i_plus_2 - f_i_plus_1) * (1 / (t_i_plus_2 - t_i_plus_1))) * 0.5;
+
+        d = f_i;
+        c = v_i;
+
+        b = ((f_i_plus_1 - f_i) * 3) * (1 / pow(t_i_plus_1 - t_i, 2)) -
+                (v_i_plus_1 + v_i * 2) * (1 / (t_i_plus_1 - t_i));
+
+        a = (v_i_plus_1 + v_i) * (1 / pow(t_i_plus_1 - t_i, 2)) -
+                ((f_i_plus_1 - f_i) * 2) * (1 / pow(t_i_plus_1 - t_i, 3));
+
+        // t{i} <= t < t{i+1}
+        //t{i} = fibonacci[i]
+        const Vector f_t = a * pow(t - t_i, 3) + b * pow(t - t_i, 2) +
+                c * (t - t_i) + d;
+
+        return f_t;
+    }
+public:
+    Vector ctrlPoints[MAX_NR_OF_CTRPs];
+    int numOfPoints;
+
+    CurveManager() {
+        numOfPoints = 0;
+    }
+
+    void draw() {
+        glColor3f(COLOR_CR.r, COLOR_CR.g, COLOR_CR.b);
+        glBegin(GL_LINE_STRIP);
+        for (int i = 1; i < numOfPoints - 2; ++i) {
+            double rate = (fibonacci[i + 1] - fibonacci[i]) / 100.0;
+            for (double t = fibonacci[i]; t < fibonacci[i + 1]; t += rate) {
+                Vector v = CatmullRomMagic(t, i);
+                glVertex2f(v.x, v.y);
+            }
+
+        }
+        glEnd();
+
+        glBegin(GL_TRIANGLES);
+        glColor3f(0.0, 0.0, 1.0);
+        for (int i = 0; i < numOfPoints; i++) {
+            glVertex2f(ctrlPoints[i].x, ctrlPoints[i].y);
+            glVertex2f(ctrlPoints[i].x - 1, ctrlPoints[i].y - 1);
+            glVertex2f(ctrlPoints[i].x + 1, ctrlPoints[i].y - 1);
+        }
+        glEnd();
+    }
+
+    void addVector(const Vector v) {
+        if (numOfPoints < MAX_NR_OF_CTRPs && v.x <= VIRT_WIDTH && v.y <= VIRT_WIDTH) {
+            ctrlPoints[numOfPoints++] = v;
+        }
+    }
+
+    bool isPointNearby(Vector clickedPixel) {
+        return false; //TODO
+    }
+};
+
+CurveManager curveManager;
 
 Vector virtcam_bottom_left = Vector(100, 100);
 Vector virtcam_top_right = Vector(500, 500);
 
-//fibonacci
-double fibonacci[NR_OF_CTRPs];
-
-Color image[screenWidth*screenHeight];
-
 /*
  * Binet form
- * Forras: https://github.com/vbalazs/grafika-kishf-2012-tavasz/
- * (tavalyi hazimbol)
+ * Forras: [1]
  */
 const double getFibonacciNr(int n) {
     const double sqrt5 = sqrt(5);
     return (pow(1 + sqrt5, n) - pow(1 - sqrt5, n)) / (sqrt5 * pow(2, n));
 }
 
-const bool fequals(float f1, float f2) {
-    if (fabs(f1 - f2) < 0.001) return true;
-    return false;
+/**
+ * Forras: [1]
+ */
+Vector getWorldCoordsFromPixels(const int px_x, const int px_y) {
+    const double width = virtcam_top_right.x - virtcam_bottom_left.x;
+
+    return Vector(virtcam_bottom_left.x + (width / screenWidth) * px_x,
+            virtcam_bottom_left.y + (width - (width / screenWidth) * px_y));
 }
 
-void ns_glVertex2Vectors(const Vector vectors[], const int size) {
-    for (int i = 0; i < size; i++) {
-        glVertex2f(vectors[i].x, vectors[i].y);
-    }
+const bool fequals(const float f1, const float f2) {
+    if (fabs(f1 - f2) < 0.001) return true;
+    return false;
 }
 
 void onInitialization() {
@@ -175,14 +274,16 @@ void onInitialization() {
             virtcam_top_right.y); //top
 
     //fill up array with fibonacci numbers - Binet form
-    for (int i = 2; i <= NR_OF_CTRPs; i++) {
+    for (int i = 2; i <= MAX_NR_OF_CTRPs; i++) {
         fibonacci[i - 1] = getFibonacciNr(i);
     }
 }
 
 void onDisplay() {
-    glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
+    glClearColor(0.4f, 0.4f, 0.4f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    curveManager.draw();
 
     glutSwapBuffers();
 
@@ -227,9 +328,13 @@ void onKeyboard(unsigned char key, int x, int y) {
 }
 
 void onMouse(int button, int state, int x, int y) {
-    //    if (button == GLUT_LEFT && state == GLUT_DOWN) {
-    //    } else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
-    //    }
+    if (button == GLUT_LEFT && state == GLUT_DOWN) {
+        cout << "INFO: onMouse leftClicked. x=" << x << " ; y=" << y << endl;
+
+        curveManager.addVector(getWorldCoordsFromPixels(x, y));
+    } else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
+        //select
+    }
 
     glutPostRedisplay();
 }
