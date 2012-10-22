@@ -153,7 +153,7 @@ const Color COLOR_CR = Color(0.0, 1.0, 0.0);
 const Color COLOR_KK = Color(1.0, 0.0, 0.0);
 
 //fibonacci
-double fibonacci[MAX_NR_OF_CTRPs];
+double params[MAX_NR_OF_CTRPs];
 
 /**
  * Forrás: [1], átalakítva
@@ -167,10 +167,10 @@ private:
     Vector CatmullRomMagic(double t, int i) {
         Vector a, b, c, d;
 
-        double t_i = fibonacci[i];
-        double t_i_plus_1 = fibonacci[i + 1];
-        double t_i_plus_2 = fibonacci[i + 2];
-        double t_i_minus_1 = fibonacci[i - 1];
+        double t_i = params[i];
+        double t_i_plus_1 = params[i + 1];
+        double t_i_plus_2 = params[i + 2];
+        double t_i_minus_1 = params[i - 1];
 
         Vector f_i = ctrlPoints[i];
         Vector f_i_plus_1 = ctrlPoints[i + 1];
@@ -199,27 +199,22 @@ private:
 
         return f_t;
     }
-public:
-    Vector ctrlPoints[MAX_NR_OF_CTRPs];
-    int numOfPoints;
 
-    CurveManager() {
-        numOfPoints = 0;
-    }
-
-    void draw() {
+    void drawCR() {
         glColor3f(COLOR_CR.r, COLOR_CR.g, COLOR_CR.b);
         glBegin(GL_LINE_STRIP);
         for (int i = 1; i < numOfPoints - 2; ++i) {
-            double rate = (fibonacci[i + 1] - fibonacci[i]) / 1000.0;
-            for (double t = fibonacci[i]; t < fibonacci[i + 1]; t += rate) {
+            double rate = (params[i + 1] - params[i]) / 1000.0;
+            for (double t = params[i]; t < params[i + 1]; t += rate) {
                 Vector v = CatmullRomMagic(t, i);
                 glVertex2f(v.x, v.y);
             }
 
         }
         glEnd();
+    }
 
+    void drawPontMarkers() {
         const double point_marker_size = (virtcam_top_right.x - virtcam_bottom_left.x) / 200;
         glBegin(GL_TRIANGLES);
         glColor3f(0.0, 0.0, 1.0);
@@ -229,6 +224,67 @@ public:
             glVertex2f(ctrlPoints[i].x + point_marker_size, ctrlPoints[i].y - point_marker_size);
         }
         glEnd();
+    }
+
+    void drawKK() {
+        glColor3f(0, 0, 1.0);
+        glBegin(GL_LINE_STRIP);
+        for (int i = 0; i < numOfPoints - 1; i += 2) {
+            double rate = (params[i + 1] - params[i]) / 1000.0;
+            double t0 = params[i];
+            double t1 = params[i + 1];
+            double t2 = params[i + 2];
+
+            for (double t = params[i]; t < params[i + 1]; t += rate) {
+                double a0 = (t - t1) / (t0 - t1) * (t - t2) / (t0 - t2);
+                double a1 = (t - t0) / (t1 - t0) * (t - t2) / (t1 - t2);
+                double a2 = (t - t0) / (t2 - t0) * (t - t1) / (t2 - t1);
+
+                Vector v = ctrlPoints[i] * a0 + ctrlPoints[i + 1] * a1 + ctrlPoints[i + 2] * a2;
+                glVertex2f(v.x, v.y);
+            }
+        }
+        glEnd();
+
+        glColor3f(1.0, 0, 1.0);
+        glBegin(GL_LINE_STRIP);
+        for (int i = 1; i < numOfPoints - 1; i += 2) {
+            double rate = (params[i + 1] - params[i]) / 1000.0;
+            double t0 = params[i];
+            double t1 = params[i + 1];
+            double t2 = params[i + 2];
+
+            for (double t = params[i]; t < params[i + 1]; t += rate) {
+
+                double b0 = (t - t1) / (t0 - t1) * (t - t2) / (t0 - t2);
+                double b1 = (t - t0) / (t1 - t0) * (t - t2) / (t1 - t2);
+                double b2 = (t - t0) / (t2 - t0) * (t - t1) / (t2 - t1);
+
+                Vector v = ctrlPoints[i] * b0 + ctrlPoints[i + 1] * b1 + ctrlPoints[i + 2] * b2;
+                glVertex2f(v.x, v.y);
+            }
+        }
+        glEnd();
+
+        //        glColor3f(COLOR_KK.r, COLOR_KK.g, COLOR_KK.b);
+        //        glBegin(GL_LINE_STRIP);
+        //        for (int i = 1; i < numOfPoints - 2; i += 2) {
+        //
+        //
+        //        }
+        //        glEnd();
+    }
+public:
+    Vector ctrlPoints[MAX_NR_OF_CTRPs];
+    int numOfPoints;
+
+    CurveManager() : numOfPoints(0) {
+    }
+
+    void draw() {
+        drawPontMarkers();
+        //                drawCR();
+        drawKK();
     }
 
     void addVector(const Vector v) {
@@ -243,15 +299,6 @@ public:
 };
 
 CurveManager curveManager;
-
-/*
- * Binet form
- * Forras: [1]
- */
-const double getFibonacciNr(int n) {
-    const double sqrt5 = sqrt(5);
-    return (pow(1 + sqrt5, n) - pow(1 - sqrt5, n)) / (sqrt5 * pow(2, n));
-}
 
 /**
  * Forras: [1]
@@ -276,9 +323,9 @@ void onInitialization() {
             virtcam_bottom_left.y, //bottom
             virtcam_top_right.y); //top
 
-    //fill up array with fibonacci numbers - Binet form
-    for (int i = 2; i <= MAX_NR_OF_CTRPs; i++) {
-        fibonacci[i - 1] = getFibonacciNr(i);
+    //fill up array with incremental params
+    for (int i = 0; i <= MAX_NR_OF_CTRPs; i++) {
+        params[i] = i + params[i - 1] + 1;
     }
 }
 
@@ -332,8 +379,6 @@ void onKeyboard(unsigned char key, int x, int y) {
 
 void onMouse(int button, int state, int x, int y) {
     if (button == GLUT_LEFT && state == GLUT_DOWN) {
-        cout << "INFO: onMouse leftClicked. x=" << x << " ; y=" << y << endl;
-
         curveManager.addVector(getWorldCoordsFromPixels(x, y));
     } else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
         //select
