@@ -53,8 +53,8 @@
 #include <GL/glu.h>
 // A GLUT-ot le kell tolteni: http://www.opengl.org/resources/libraries/glut/
 #include <GL/glut.h>
-#include <iostream>
-using namespace std;
+//#include <iostream>
+//using namespace std;
 
 /**
  * Források:
@@ -152,7 +152,6 @@ Vector virtcam_top_right = Vector(500.0, 500.0);
 const Color COLOR_CR = Color(0.0, 1.0, 0.0);
 const Color COLOR_KK = Color(1.0, 0.0, 0.0);
 
-//fibonacci
 double params[MAX_NR_OF_CTRPs];
 
 /**
@@ -164,7 +163,7 @@ private:
     /**
      * Forrás: [2] és [3] alapján
      */
-    Vector CatmullRomMagic(double t, int i) {
+    Vector CatmullRomMagic(const double t, const int i) {
         Vector a, b, c, d;
 
         double t_i = params[i];
@@ -193,23 +192,21 @@ private:
                 ((f_i_plus_1 - f_i) * 2) * (1 / pow(t_i_plus_1 - t_i, 3));
 
         // t{i} <= t < t{i+1}
-        //t{i} = fibonacci[i]
+        //t{i} = params[i]
         const Vector f_t = a * pow(t - t_i, 3) + b * pow(t - t_i, 2) +
                 c * (t - t_i) + d;
 
         return f_t;
     }
 
-    void drawCR() {
+    void drawCR(const double rate) {
         glColor3f(COLOR_CR.r, COLOR_CR.g, COLOR_CR.b);
         glBegin(GL_LINE_STRIP);
         for (int i = 1; i < numOfPoints - 2; ++i) {
-            double rate = (params[i + 1] - params[i]) / 1000.0;
             for (double t = params[i]; t < params[i + 1]; t += rate) {
                 Vector v = CatmullRomMagic(t, i);
                 glVertex2f(v.x, v.y);
             }
-
         }
         glEnd();
     }
@@ -226,21 +223,20 @@ private:
         glEnd();
     }
 
-    void drawKK() {
+    void drawKK(const double rate) {
         glColor3f(0, 0, 1.0);
         glBegin(GL_LINE_STRIP);
-        for (int i = 0; i < numOfPoints - 1; i += 2) {
-            double rate = (params[i + 1] - params[i]) / 1000.0;
-            double t0 = params[i];
-            double t1 = params[i + 1];
-            double t2 = params[i + 2];
+        for (int i = 0; i < numOfPoints - 2; i += 2) {
+            const double t0 = params[i];
+            const double t1 = params[i + 1];
+            const double t2 = params[i + 2];
 
-            for (double t = params[i]; t < params[i + 1]; t += rate) {
-                double a0 = (t - t1) / (t0 - t1) * (t - t2) / (t0 - t2);
-                double a1 = (t - t0) / (t1 - t0) * (t - t2) / (t1 - t2);
-                double a2 = (t - t0) / (t2 - t0) * (t - t1) / (t2 - t1);
+            for (double t = t0; t < t2; t += rate) {
+                const double a0 = (t - t1) / (t0 - t1) * (t - t2) / (t0 - t2);
+                const double a1 = (t - t0) / (t1 - t0) * (t - t2) / (t1 - t2);
+                const double a2 = (t - t0) / (t2 - t0) * (t - t1) / (t2 - t1);
 
-                Vector v = ctrlPoints[i] * a0 + ctrlPoints[i + 1] * a1 + ctrlPoints[i + 2] * a2;
+                const Vector v = ctrlPoints[i] * a0 + ctrlPoints[i + 1] * a1 + ctrlPoints[i + 2] * a2;
                 glVertex2f(v.x, v.y);
             }
         }
@@ -248,31 +244,49 @@ private:
 
         glColor3f(1.0, 0, 1.0);
         glBegin(GL_LINE_STRIP);
-        for (int i = 1; i < numOfPoints - 1; i += 2) {
-            double rate = (params[i + 1] - params[i]) / 1000.0;
-            double t0 = params[i];
-            double t1 = params[i + 1];
-            double t2 = params[i + 2];
+        for (int i = 1; i < numOfPoints - 2; i += 2) {
+            const double t1 = params[i];
+            const double t2 = params[i + 1];
+            const double t3 = params[i + 2];
 
-            for (double t = params[i]; t < params[i + 1]; t += rate) {
+            for (double t = t1; t < t3; t += rate) {
 
-                double b0 = (t - t1) / (t0 - t1) * (t - t2) / (t0 - t2);
-                double b1 = (t - t0) / (t1 - t0) * (t - t2) / (t1 - t2);
-                double b2 = (t - t0) / (t2 - t0) * (t - t1) / (t2 - t1);
+                const double b0 = (t - t2) / (t1 - t2) * (t - t3) / (t1 - t3);
+                const double b1 = (t - t1) / (t2 - t1) * (t - t3) / (t2 - t3);
+                const double b2 = (t - t1) / (t3 - t1) * (t - t2) / (t3 - t2);
 
-                Vector v = ctrlPoints[i] * b0 + ctrlPoints[i + 1] * b1 + ctrlPoints[i + 2] * b2;
+                const Vector v = ctrlPoints[i] * b0 + ctrlPoints[i + 1] * b1 + ctrlPoints[i + 2] * b2;
                 glVertex2f(v.x, v.y);
             }
         }
         glEnd();
 
-        //        glColor3f(COLOR_KK.r, COLOR_KK.g, COLOR_KK.b);
-        //        glBegin(GL_LINE_STRIP);
-        //        for (int i = 1; i < numOfPoints - 2; i += 2) {
-        //
-        //
-        //        }
-        //        glEnd();
+        glColor3f(COLOR_KK.r, COLOR_KK.g, COLOR_KK.b);
+        glBegin(GL_LINE_STRIP);
+        for (int i = 0; i < numOfPoints - 3; ++i) {
+            const double t0 = params[i];
+            const double t1 = params[i + 1];
+            const double t2 = params[i + 2];
+            const double t3 = params[i + 3];
+
+            for (double t = t1; t < t2; t += rate) {
+
+                const double a0 = (t - t1) / (t0 - t1) * (t - t2) / (t0 - t2);
+                const double a1 = (t - t0) / (t1 - t0) * (t - t2) / (t1 - t2);
+                const double a2 = (t - t0) / (t2 - t0) * (t - t1) / (t2 - t1);
+
+                const double b0 = (t - t2) / (t1 - t2) * (t - t3) / (t1 - t3);
+                const double b1 = (t - t1) / (t2 - t1) * (t - t3) / (t2 - t3);
+                const double b2 = (t - t1) / (t3 - t1) * (t - t2) / (t3 - t2);
+
+                Vector curvePointA = ctrlPoints[i] * a0 + ctrlPoints[i + 1] * a1 + ctrlPoints[i + 2] * a2;
+                Vector curvePointB = ctrlPoints[i + 1] * b0 + ctrlPoints[i + 2] * b1 + ctrlPoints[i + 3] * b2;
+
+                const Vector v = curvePointA * ((t - t1) / (t2 - t1)) + curvePointB * ((t2 - t) / (t2 - t1));
+                glVertex2f(v.x, v.y);
+            }
+        }
+        glEnd();
     }
 public:
     Vector ctrlPoints[MAX_NR_OF_CTRPs];
@@ -283,8 +297,15 @@ public:
 
     void draw() {
         drawPontMarkers();
-        //                drawCR();
-        drawKK();
+
+        int param_range_sum = 0;
+        for (int i = 0; i < numOfPoints; i++) {
+            param_range_sum += params[i];
+        }
+        const double rate = param_range_sum / 1000.0;
+
+        drawCR(rate);
+        drawKK(rate);
     }
 
     void addVector(const Vector v) {
@@ -325,7 +346,7 @@ void onInitialization() {
 
     //fill up array with incremental params
     for (int i = 0; i <= MAX_NR_OF_CTRPs; i++) {
-        params[i] = i + params[i - 1] + 1;
+        params[i] = (double) (i + params[i - 1] + 1.0);
     }
 }
 
