@@ -53,8 +53,8 @@
 #include <GL/glu.h>
 // A GLUT-ot le kell tolteni: http://www.opengl.org/resources/libraries/glut/
 #include <GL/glut.h>
-//#include <iostream>
-//using namespace std;
+#include <iostream>
+using namespace std;
 
 /**
  * Források:
@@ -63,6 +63,7 @@
  * Visualization and Graphics Research Group, Department of Computer Science, University of California, Davis)
  * [3]: Dr. Szirmay-Kalos László, Antal György, Csonka Ferenc 
  *              - Háromdimenziós Grafika, animáció és játékfejlesztés, 2004 - Computerbooks, Budapest
+ * [4]: http://en.wikipedia.org/wiki/Cohen%E2%80%93Sutherland_algorithm
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -154,6 +155,87 @@ const Color COLOR_KK = Color(1.0, 0.0, 0.0);
 
 double params[MAX_NR_OF_CTRPs];
 double rate = 0;
+bool is_moving = false;
+Vector moving_from_px;
+
+/**
+ * Forras: [1]
+ */
+Vector getWorldCoordsFromPixels(const double px_x, const double px_y) {
+    const double width = virtcam_top_right.x - virtcam_bottom_left.x;
+
+    return Vector(virtcam_bottom_left.x + (width / (double) screenWidth) * px_x,
+            virtcam_bottom_left.y + (width - (width / (double) screenWidth) * px_y));
+}
+
+/*
+ * Cohen-Sutherland vágás: Forrás: [4]
+ */
+const int INSIDE = 0;
+const int LEFT = 1;
+const int RIGHT = 2;
+const int BOTTOM = 4;
+const int TOP = 8;
+
+int ComputeOutCode(double x, double y, double xmin, double ymin, double xmax, double ymax) {
+    int code = INSIDE;
+
+    if (x < xmin)
+        code |= LEFT;
+    else if (x > xmax)
+        code |= RIGHT;
+    if (y < ymin)
+        code |= BOTTOM;
+    else if (y > ymax)
+        code |= TOP;
+
+    return code;
+}
+
+bool CohenSutherlandLineInRect(double x0, double y0, double x1, double y1, double xmin, double ymin, double xmax, double ymax) {
+    int outcode0 = ComputeOutCode(x0, y0, xmin, ymin, xmax, ymax);
+    int outcode1 = ComputeOutCode(x1, y1, xmin, ymin, xmax, ymax);
+    bool accept = false;
+
+    while (true) {
+        if (!(outcode0 | outcode1)) {
+            accept = true;
+            break;
+        } else if (outcode0 & outcode1) {
+            break;
+        } else {
+            double x, y;
+
+            int outcodeOut = outcode0 ? outcode0 : outcode1;
+
+            if (outcodeOut & TOP) {
+                x = x0 + (x1 - x0) * (ymax - y0) / (y1 - y0);
+                y = ymax;
+            } else if (outcodeOut & BOTTOM) {
+                x = x0 + (x1 - x0) * (ymin - y0) / (y1 - y0);
+                y = ymin;
+            } else if (outcodeOut & RIGHT) {
+                y = y0 + (y1 - y0) * (xmax - x0) / (x1 - x0);
+                x = xmax;
+            } else { // (outcodeOut & LEFT) {
+                y = y0 + (y1 - y0) * (xmin - x0) / (x1 - x0);
+                x = xmin;
+            }
+
+            if (outcodeOut == outcode0) {
+                x0 = x;
+                y0 = y;
+                outcode0 = ComputeOutCode(x0, y0, xmin, ymin, xmax, ymax);
+            } else {
+                x1 = x;
+                y1 = y;
+                outcode1 = ComputeOutCode(x1, y1, xmin, ymin, xmax, ymax);
+            }
+        }
+    }
+
+    return accept;
+}
 
 /**
  * Forrás: [1], átalakítva
@@ -224,6 +306,23 @@ private:
         glEnd();
     }
 
+    Vector convexComb(const int i, const double t, const double t0,
+            const double t1, const double t2, const double t3) {
+
+        const double a0 = (t - t1) / (t0 - t1) * (t - t2) / (t0 - t2);
+        const double a1 = (t - t0) / (t1 - t0) * (t - t2) / (t1 - t2);
+        const double a2 = (t - t0) / (t2 - t0) * (t - t1) / (t2 - t1);
+
+        const double b0 = (t - t2) / (t1 - t2) * (t - t3) / (t1 - t3);
+        const double b1 = (t - t1) / (t2 - t1) * (t - t3) / (t2 - t3);
+        const double b2 = (t - t1) / (t3 - t1) * (t - t2) / (t3 - t2);
+
+        Vector curvePointA = ctrlPoints[i] * a0 + ctrlPoints[i + 1] * a1 + ctrlPoints[i + 2] * a2;
+        Vector curvePointB = ctrlPoints[i + 1] * b0 + ctrlPoints[i + 2] * b1 + ctrlPoints[i + 3] * b2;
+
+        return curvePointA * ((t - t1) / (t2 - t1)) + curvePointB * ((t2 - t) / (t2 - t1));
+    }
+
     void drawKK() {
         glColor3f(0, 0, 1.0);
         glBegin(GL_LINE_STRIP);
@@ -271,19 +370,7 @@ private:
             const double t3 = params[i + 3];
 
             for (double t = t1; t < t2; t += rate) {
-
-                const double a0 = (t - t1) / (t0 - t1) * (t - t2) / (t0 - t2);
-                const double a1 = (t - t0) / (t1 - t0) * (t - t2) / (t1 - t2);
-                const double a2 = (t - t0) / (t2 - t0) * (t - t1) / (t2 - t1);
-
-                const double b0 = (t - t2) / (t1 - t2) * (t - t3) / (t1 - t3);
-                const double b1 = (t - t1) / (t2 - t1) * (t - t3) / (t2 - t3);
-                const double b2 = (t - t1) / (t3 - t1) * (t - t2) / (t3 - t2);
-
-                Vector curvePointA = ctrlPoints[i] * a0 + ctrlPoints[i + 1] * a1 + ctrlPoints[i + 2] * a2;
-                Vector curvePointB = ctrlPoints[i + 1] * b0 + ctrlPoints[i + 2] * b1 + ctrlPoints[i + 3] * b2;
-
-                const Vector v = curvePointA * ((t - t1) / (t2 - t1)) + curvePointB * ((t2 - t) / (t2 - t1));
+                const Vector v = convexComb(i, t, t0, t1, t2, t3);
                 glVertex2f(v.x, v.y);
             }
         }
@@ -302,33 +389,55 @@ public:
         drawKK();
     }
 
-    void addVector(const Vector v) {
+    void addPoint(const Vector v) {
         if (numOfPoints < MAX_NR_OF_CTRPs && v.x <= VIRT_WIDTH && v.y <= VIRT_WIDTH) {
             ctrlPoints[numOfPoints++] = v;
         }
     }
 
     bool isPointNearby(Vector clickedPixel) {
-        return false; //TODO
+
+        const Vector split_rect_bottom_left = getWorldCoordsFromPixels(clickedPixel.x - 2.5, clickedPixel.y + 2.5);
+        const Vector split_rect_top_right = getWorldCoordsFromPixels(clickedPixel.x + 2.5, clickedPixel.y - 2.5);
+
+        for (int i = 0; i < numOfPoints - 3; ++i) {
+            const double t0 = params[i];
+            const double t1 = params[i + 1];
+            const double t2 = params[i + 2];
+            const double t3 = params[i + 3];
+
+            for (double t = t1; t < t2 - rate; t += rate * 2) {
+
+                const Vector curve_line_point1 = convexComb(i, t, t0, t1, t2, t3);
+                const Vector curve_line_point2 = convexComb(i, t + rate, t0, t1, t2, t3);
+
+                if (CohenSutherlandLineInRect(curve_line_point1.x, curve_line_point1.y, curve_line_point2.x, curve_line_point2.y,
+                        split_rect_bottom_left.x, split_rect_bottom_left.y, split_rect_top_right.x, split_rect_top_right.y)) {
+
+                    return true;
+                }
+            }
+        }
+
+        for (int i = 1; i < numOfPoints - 2; ++i) {
+            for (double t = params[i]; t < params[i + 1] - rate; t += rate * 2) {
+
+                Vector curve_line_point1 = CatmullRomMagic(t, i);
+                Vector curve_line_point2 = CatmullRomMagic(t + rate, i);
+
+                if (CohenSutherlandLineInRect(curve_line_point1.x, curve_line_point1.y, curve_line_point2.x, curve_line_point2.y,
+                        split_rect_bottom_left.x, split_rect_bottom_left.y, split_rect_top_right.x, split_rect_top_right.y)) {
+
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 };
 
 CurveManager curveManager;
-
-/**
- * Forras: [1]
- */
-Vector getWorldCoordsFromPixels(const int px_x, const int px_y) {
-    const double width = virtcam_top_right.x - virtcam_bottom_left.x;
-
-    return Vector(virtcam_bottom_left.x + (width / (double) screenWidth) * px_x,
-            virtcam_bottom_left.y + (width - (width / (double) screenWidth) * px_y));
-}
-
-const bool fequals(const float f1, const float f2) {
-    if (fabs(f1 - f2) < 0.001) return true;
-    return false;
-}
 
 void onInitialization() {
     glViewport(0, 0, screenWidth, screenHeight);
@@ -394,7 +503,7 @@ void onKeyboard(unsigned char key, int x, int y) {
 
 void onMouse(int button, int state, int x, int y) {
     if (button == GLUT_LEFT && state == GLUT_DOWN) {
-        curveManager.addVector(getWorldCoordsFromPixels(x, y));
+        curveManager.addPoint(getWorldCoordsFromPixels(x, y));
 
         double param_range_sum = 0;
         for (int i = 0; i < curveManager.numOfPoints; i++) {
@@ -403,7 +512,24 @@ void onMouse(int button, int state, int x, int y) {
         rate = param_range_sum / 1000.0;
 
     } else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
-        //select
+        if (is_moving) {
+            const Vector moving_from_world =
+                    getWorldCoordsFromPixels(moving_from_px.x, moving_from_px.y);
+
+            const Vector moving_to_world = getWorldCoordsFromPixels(x, y);
+
+            for (int i = 0; i < curveManager.numOfPoints; i++) {
+                curveManager.ctrlPoints[i].x += moving_to_world.x - moving_from_world.x;
+                curveManager.ctrlPoints[i].y += moving_to_world.y - moving_from_world.y;
+            }
+
+            is_moving = false;
+        } else {
+            if (curveManager.isPointNearby(Vector(x, y))) {
+                is_moving = true;
+                moving_from_px = Vector(x, y);
+            }
+        }
     }
 
     glutPostRedisplay();
