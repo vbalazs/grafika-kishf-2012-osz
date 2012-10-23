@@ -53,8 +53,6 @@
 #include <GL/glu.h>
 // A GLUT-ot le kell tolteni: http://www.opengl.org/resources/libraries/glut/
 #include <GL/glut.h>
-#include <iostream>
-using namespace std;
 
 /**
  * Források:
@@ -144,8 +142,8 @@ struct Color {
 const int screenWidth = 600;
 const int screenHeight = 600;
 
-const int VIRT_WIDTH = 1000; //1000mm
-const int MAX_NR_OF_CTRPs = 100; //number of control points
+const int VIRT_WIDTH = 1000;
+const int MAX_NR_OF_CTRPs = 100;
 
 Vector virtcam_bottom_left = Vector(100.0, 100.0);
 Vector virtcam_top_right = Vector(500.0, 500.0);
@@ -217,7 +215,7 @@ bool CohenSutherlandLineInRect(double x0, double y0, double x1, double y1, doubl
             } else if (outcodeOut & RIGHT) {
                 y = y0 + (y1 - y0) * (xmax - x0) / (x1 - x0);
                 x = xmax;
-            } else { // (outcodeOut & LEFT) {
+            } else {
                 y = y0 + (y1 - y0) * (xmin - x0) / (x1 - x0);
                 x = xmin;
             }
@@ -274,8 +272,6 @@ private:
         a = (v_i_plus_1 + v_i) * (1 / pow(t_i_plus_1 - t_i, 2)) -
                 ((f_i_plus_1 - f_i) * 2) * (1 / pow(t_i_plus_1 - t_i, 3));
 
-        // t{i} <= t < t{i+1}
-        //t{i} = params[i]
         const Vector f_t = a * pow(t - t_i, 3) + b * pow(t - t_i, 2) +
                 c * (t - t_i) + d;
 
@@ -324,43 +320,6 @@ private:
     }
 
     void drawKK() {
-        glColor3f(0, 0, 1.0);
-        glBegin(GL_LINE_STRIP);
-        for (int i = 0; i < numOfPoints - 2; i += 2) {
-            const double t0 = params[i];
-            const double t1 = params[i + 1];
-            const double t2 = params[i + 2];
-
-            for (double t = t0; t < t2; t += rate) {
-                const double a0 = (t - t1) / (t0 - t1) * (t - t2) / (t0 - t2);
-                const double a1 = (t - t0) / (t1 - t0) * (t - t2) / (t1 - t2);
-                const double a2 = (t - t0) / (t2 - t0) * (t - t1) / (t2 - t1);
-
-                const Vector v = ctrlPoints[i] * a0 + ctrlPoints[i + 1] * a1 + ctrlPoints[i + 2] * a2;
-                glVertex2f(v.x, v.y);
-            }
-        }
-        glEnd();
-
-        glColor3f(1.0, 0, 1.0);
-        glBegin(GL_LINE_STRIP);
-        for (int i = 1; i < numOfPoints - 2; i += 2) {
-            const double t1 = params[i];
-            const double t2 = params[i + 1];
-            const double t3 = params[i + 2];
-
-            for (double t = t1; t < t3; t += rate) {
-
-                const double b0 = (t - t2) / (t1 - t2) * (t - t3) / (t1 - t3);
-                const double b1 = (t - t1) / (t2 - t1) * (t - t3) / (t2 - t3);
-                const double b2 = (t - t1) / (t3 - t1) * (t - t2) / (t3 - t2);
-
-                const Vector v = ctrlPoints[i] * b0 + ctrlPoints[i + 1] * b1 + ctrlPoints[i + 2] * b2;
-                glVertex2f(v.x, v.y);
-            }
-        }
-        glEnd();
-
         glColor3f(COLOR_KK.r, COLOR_KK.g, COLOR_KK.b);
         glBegin(GL_LINE_STRIP);
         for (int i = 0; i < numOfPoints - 3; ++i) {
@@ -442,12 +401,11 @@ CurveManager curveManager;
 void onInitialization() {
     glViewport(0, 0, screenWidth, screenHeight);
     glLoadIdentity();
-    gluOrtho2D(virtcam_bottom_left.x, //left
-            virtcam_top_right.x, //right
-            virtcam_bottom_left.y, //bottom
-            virtcam_top_right.y); //top
+    gluOrtho2D(virtcam_bottom_left.x,
+            virtcam_top_right.x,
+            virtcam_bottom_left.y,
+            virtcam_top_right.y);
 
-    //fill up array with incremental params
     for (int i = 0; i <= MAX_NR_OF_CTRPs; i++) {
         params[i] = (double) (i + params[i - 1] + 1.0);
     }
@@ -467,37 +425,42 @@ void onKeyboard(unsigned char key, int x, int y) {
     if (key == 'd') glutPostRedisplay();
     if (key == 'q') exit(0);
 
-    const double width = virtcam_top_right.x - virtcam_bottom_left.x;
+    if (key == 'z') {
+        const double new_width = (virtcam_top_right.x - virtcam_bottom_left.x) / 10;
+        const Vector clickedWorldCoord = getWorldCoordsFromPixels(x, y);
 
-    if (key == 'z') { //zoom in
-        const double change = (width - width / 10.0) / 2.0;
+        virtcam_bottom_left.x = clickedWorldCoord.x
+                - (clickedWorldCoord.x - virtcam_bottom_left.x) / 10;
 
-        virtcam_bottom_left.x += change;
-        virtcam_bottom_left.y += change;
+        virtcam_bottom_left.y = clickedWorldCoord.y
+                + (virtcam_bottom_left.y - clickedWorldCoord.y) / 10;
 
-        virtcam_top_right.x -= change;
-        virtcam_top_right.y -= change;
-
-        glLoadIdentity();
-        gluOrtho2D(virtcam_bottom_left.x, //left
-                virtcam_top_right.x, //right
-                virtcam_bottom_left.y, //bottom
-                virtcam_top_right.y); //top
-
-    } else if (key == 'Z') { //zoom out
-        const double change = width / 2.0 * 10.0 - width / 2.0;
-
-        virtcam_bottom_left.x -= change;
-        virtcam_bottom_left.y -= change;
-
-        virtcam_top_right.x += change;
-        virtcam_top_right.y += change;
+        virtcam_top_right.x = virtcam_bottom_left.x + new_width;
+        virtcam_top_right.y = virtcam_bottom_left.y + new_width;
 
         glLoadIdentity();
-        gluOrtho2D(virtcam_bottom_left.x, //left
-                virtcam_top_right.x, //right
-                virtcam_bottom_left.y, //bottom
-                virtcam_top_right.y); //top
+        gluOrtho2D(virtcam_bottom_left.x,
+                virtcam_top_right.x,
+                virtcam_bottom_left.y,
+                virtcam_top_right.y);
+    } else if (key == 'Z') {
+        const double new_width = (virtcam_top_right.x - virtcam_bottom_left.x) * 10;
+        const Vector clickedWorldCoord = getWorldCoordsFromPixels(x, y);
+
+        virtcam_bottom_left.x = clickedWorldCoord.x
+                - (clickedWorldCoord.x - virtcam_bottom_left.x) * 10;
+
+        virtcam_bottom_left.y = clickedWorldCoord.y
+                + (virtcam_bottom_left.y - clickedWorldCoord.y) * 10;
+
+        virtcam_top_right.x = virtcam_bottom_left.x + new_width;
+        virtcam_top_right.y = virtcam_bottom_left.y + new_width;
+
+        glLoadIdentity();
+        gluOrtho2D(virtcam_bottom_left.x,
+                virtcam_top_right.x,
+                virtcam_bottom_left.y,
+                virtcam_top_right.y);
     }
 }
 
