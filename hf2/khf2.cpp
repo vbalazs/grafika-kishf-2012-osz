@@ -161,7 +161,7 @@ class CurveManager {
 private:
 
     /**
-     * Forrás: [2] és [3] alapján
+     * Forrás: [1] ([2] és [3] alapján)
      */
     Vector CatmullRomMagic(const double t, const int i) {
         Vector a, b, c, d;
@@ -211,7 +211,7 @@ private:
         glEnd();
     }
 
-    void drawPontMarkers() {
+    void drawPointMarkers() {
         const double point_marker_size = (virtcam_top_right.x - virtcam_bottom_left.x) / 200;
         glBegin(GL_TRIANGLES);
         glColor3f(0.0, 0.0, 1.0);
@@ -296,7 +296,7 @@ public:
     }
 
     void draw() {
-        drawPontMarkers();
+        drawPointMarkers();
 
         int param_range_sum = 0;
         for (int i = 0; i < numOfPoints; i++) {
