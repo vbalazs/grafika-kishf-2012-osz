@@ -62,6 +62,7 @@
  * [3]: Dr. Szirmay-Kalos László, Antal György, Csonka Ferenc 
  *              - Háromdimenziós Grafika, animáció és játékfejlesztés, 2004 - Computerbooks, Budapest
  * [4]: http://en.wikipedia.org/wiki/Cohen%E2%80%93Sutherland_algorithm
+ * [5]: lagrange interpoláció magyarázata alapján: Lagrangian Interpolation - Theory - http://www.youtube.com/watch?v=_zK_KhHW6og
  */
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -305,6 +306,9 @@ private:
     Vector convexComb(const int i, const double t, const double t0,
             const double t1, const double t2, const double t3) {
 
+        /*
+         * Lagrange interpolációs súlyfüggvények, forrás: [5]
+         */
         const double a0 = (t - t1) / (t0 - t1) * (t - t2) / (t0 - t2);
         const double a1 = (t - t0) / (t1 - t0) * (t - t2) / (t1 - t2);
         const double a2 = (t - t0) / (t2 - t0) * (t - t1) / (t2 - t1);
