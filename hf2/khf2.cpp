@@ -153,6 +153,7 @@ const Color COLOR_CR = Color(0.0, 1.0, 0.0);
 const Color COLOR_KK = Color(1.0, 0.0, 0.0);
 
 double params[MAX_NR_OF_CTRPs];
+double rate = 0;
 
 /**
  * Forrás: [1], átalakítva
@@ -199,7 +200,7 @@ private:
         return f_t;
     }
 
-    void drawCR(const double rate) {
+    void drawCR() {
         glColor3f(COLOR_CR.r, COLOR_CR.g, COLOR_CR.b);
         glBegin(GL_LINE_STRIP);
         for (int i = 1; i < numOfPoints - 2; ++i) {
@@ -223,7 +224,7 @@ private:
         glEnd();
     }
 
-    void drawKK(const double rate) {
+    void drawKK() {
         glColor3f(0, 0, 1.0);
         glBegin(GL_LINE_STRIP);
         for (int i = 0; i < numOfPoints - 2; i += 2) {
@@ -297,15 +298,8 @@ public:
 
     void draw() {
         drawPointMarkers();
-
-        int param_range_sum = 0;
-        for (int i = 0; i < numOfPoints; i++) {
-            param_range_sum += params[i];
-        }
-        const double rate = param_range_sum / 1000.0;
-
-        drawCR(rate);
-        drawKK(rate);
+        drawCR();
+        drawKK();
     }
 
     void addVector(const Vector v) {
@@ -401,6 +395,13 @@ void onKeyboard(unsigned char key, int x, int y) {
 void onMouse(int button, int state, int x, int y) {
     if (button == GLUT_LEFT && state == GLUT_DOWN) {
         curveManager.addVector(getWorldCoordsFromPixels(x, y));
+
+        double param_range_sum = 0;
+        for (int i = 0; i < curveManager.numOfPoints; i++) {
+            param_range_sum += params[i];
+        }
+        rate = param_range_sum / 1000.0;
+
     } else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
         //select
     }
