@@ -297,11 +297,98 @@ void drawSphere() {
     glPopMatrix();
 }
 
+void drawBuilding(double x, double z) {
+    const int size = 1;
+
+    const GLfloat diff[] = {0.91, 0.0, 0.0, 1.0};
+    const GLfloat spec[] = {0.1, 0.00, 0.0, 1.0};
+    const GLfloat amb[] = {0.4, 0.1, 0.1, 1.0};
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT, amb);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, diff);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
+    glMaterialf(GL_FRONT, GL_SHININESS, 10.0);
+
+    glPushMatrix();
+    glTranslatef(x, -4.5, z);
+    glScalef(0.5, 0.5, 0.5);
+
+    //top
+    glBegin(GL_QUADS);
+    glNormal3f(0, 1, 0);
+    glVertex3f(0, 0, 0);
+
+    glNormal3f(0, 1, 0);
+    glVertex3f(0, 0, size);
+
+    glNormal3f(0, 1, 0);
+    glVertex3f(size, 0, size);
+
+    glNormal3f(0, 1, 0);
+    glVertex3f(size, 0, 0);
+
+    //front
+    glNormal3f(0, 0, 1);
+    glVertex3f(0, 0, size);
+
+    glNormal3f(0, 0, 1);
+    glVertex3f(size, 0, size);
+
+    glNormal3f(0, 0, 1);
+    glVertex3f(size, -size, size);
+
+    glNormal3f(0, 0, 1);
+    glVertex3f(0, -size, size);
+
+    //back
+    glNormal3f(0, 0, -1);
+    glVertex3f(0, 0, 0);
+
+    glNormal3f(0, 0, -1);
+    glVertex3f(size, 0, 0);
+
+    glNormal3f(0, 0, -1);
+    glVertex3f(size, -size, 0);
+
+    glNormal3f(0, 0, -1);
+    glVertex3f(0, -size, 0);
+
+    //right
+    glNormal3f(1, 0, 0);
+    glVertex3f(size, 0, 0);
+
+    glNormal3f(1, 0, 0);
+    glVertex3f(size, 0, size);
+
+    glNormal3f(1, 0, 0);
+    glVertex3f(size, -size, size);
+
+    glNormal3f(1, 0, 0);
+    glVertex3f(size, -size, 0);
+
+    //left
+    glNormal3f(-1, 0, 0);
+    glVertex3f(0, 0, 0);
+
+    glNormal3f(-1, 0, 0);
+    glVertex3f(0, 0, size);
+
+    glNormal3f(-1, 0, 0);
+    glVertex3f(0, -size, size);
+
+    glNormal3f(-1, 0, 0);
+    glVertex3f(0, -size, 0);
+
+    glEnd();
+
+    glPopMatrix();
+}
+
 void drawField() {
     static const float d = 0.02f;
 
-    //        glEnable(GL_TEXTURE_2D);
-    //        glBindTexture(GL_TEXTURE_2D, fieldTexture);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, fieldTexture);
 
     const GLfloat diff[] = {0.0, 0.91, 0.0, 1.0};
     const GLfloat spec[] = {0.0, 0.01, 0.0, 1.0};
@@ -314,27 +401,45 @@ void drawField() {
 
     glPushMatrix();
     glScalef(FIELD_WIDTH, 1, FIELD_LONG);
-    glTranslatef(0, -5, -1);
-    glNormal3f(0, 1, 0);
+    glTranslatef(0, -5, -0.9);
     glBegin(GL_QUADS);
     for (float x = -1.0f; x < 1.0f; x += d) {
         for (float z = -1.0f; z < 1.0f; z += d) {
+            glNormal3f(0, 1, 0);
             glTexCoord2f(x, z);
             glVertex3f(x, 0, -z);
 
+            glNormal3f(0, 1, 0);
             glTexCoord2f(x + d, z);
             glVertex3f(x + d, 0, -z);
 
+            glNormal3f(0, 1, 0);
             glTexCoord2f(x + d, z + d);
             glVertex3f(x + d, 0, -(z + d));
 
+            glNormal3f(0, 1, 0);
             glTexCoord2f(x, z + d);
             glVertex3f(x, 0, -(z + d));
         }
     }
     glEnd();
     glPopMatrix();
-    //        glDisable(GL_TEXTURE_2D);
+    glDisable(GL_TEXTURE_2D);
+
+    drawBuilding(0, -2);
+    drawBuilding(0.5, -2);
+    drawBuilding(10, -2);
+    drawBuilding(10, -20);
+    drawBuilding(-25, -20);
+    drawBuilding(17, -30);
+    drawBuilding(-14, -16);
+    drawBuilding(-14, -40);
+    drawBuilding(10, -40);
+    drawBuilding(2.5, -30);
+    drawBuilding(3, -30);
+    drawBuilding(3.5, -30);
+    drawBuilding(4, -30);
+
 }
 
 void setLight(Vector sunPosv) {
@@ -395,7 +500,7 @@ void onInitialization() {
     glDisable(GL_TEXTURE_2D);
 
     cam.pos = Vector(0.0, 1.0, 2.0);
-    sunPos = Vector(0.0, 0.01, -5.0);
+    sunPos = Vector(0.0, 3, 3);
     setLight(sunPos);
 }
 
@@ -454,12 +559,31 @@ void onKeyboard(unsigned char key, int x, int y) {
     }
 
     if (key == 'c') {
-        cam.pos.x -= 1;
+        cam.pos.x -= 0.2;
+        cam.dump();
+    }
+
+    if (key == 'C') {
+        cam.pos.x += 0.2;
         cam.dump();
     }
 
     if (key == 'v') {
-        cam.pos.x += 1;
+        cam.pos.y -= 0.2;
+        cam.dump();
+    }
+
+    if (key == 'V') {
+        cam.pos.y += 0.2;
+        cam.dump();
+    }
+
+    if (key == 'z') {
+        cam.pos.z -= 0.2;
+        cam.dump();
+    }
+    if (key == 'Z') {
+        cam.pos.z += 0.2;
         cam.dump();
     }
 
