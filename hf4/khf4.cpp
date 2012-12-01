@@ -170,6 +170,89 @@ unsigned int fieldTexture;
 const int FIELD_WIDTH = 30;
 const int FIELD_LONG = 50;
 
+void drawCuboid(double a, double b, double height) {
+    glBegin(GL_QUADS);
+    //bottom
+    glNormal3f(0, -1, 0);
+    glVertex3f(0, 0, 0);
+
+    glNormal3f(0, -1, 0);
+    glVertex3f(0, 0, -a);
+
+    glNormal3f(0, -1, 0);
+    glVertex3f(b, 0, -a);
+
+    glNormal3f(0, -1, 0);
+    glVertex3f(b, 0, 0);
+
+    //top
+    glNormal3f(0, 1, 0);
+    glVertex3f(0, height, 0);
+
+    glNormal3f(0, 1, 0);
+    glVertex3f(0, height, -a);
+
+    glNormal3f(0, 1, 0);
+    glVertex3f(b, height, -a);
+
+    glNormal3f(0, 1, 0);
+    glVertex3f(b, height, 0);
+
+    //back
+    glNormal3f(0, 0, -1);
+    glVertex3f(0, 0, -a);
+
+    glNormal3f(0, 0, -1);
+    glVertex3f(b, 0, -a);
+
+    glNormal3f(0, 0, -1);
+    glVertex3f(b, height, -a);
+
+    glNormal3f(0, 0, -1);
+    glVertex3f(0, height, -a);
+
+    //front
+    glNormal3f(0, 0, 1);
+    glVertex3f(0, 0, 0);
+
+    glNormal3f(0, 0, 1);
+    glVertex3f(b, 0, 0);
+
+    glNormal3f(0, 0, 1);
+    glVertex3f(b, height, 0);
+
+    glNormal3f(0, 0, 1);
+    glVertex3f(0, height, 0);
+
+    //right
+    glNormal3f(1, 0, 0);
+    glVertex3f(b, 0, 0);
+
+    glNormal3f(1, 0, 0);
+    glVertex3f(b, 0, -a);
+
+    glNormal3f(1, 0, 0);
+    glVertex3f(b, height, -a);
+
+    glNormal3f(1, 0, 0);
+    glVertex3f(b, height, 0);
+
+    //left
+    glNormal3f(-1, 0, 0);
+    glVertex3f(0, 0, 0);
+
+    glNormal3f(-1, 0, 0);
+    glVertex3f(0, 0, -a);
+
+    glNormal3f(-1, 0, 0);
+    glVertex3f(0, height, -a);
+
+    glNormal3f(-1, 0, 0);
+    glVertex3f(0, height, 0);
+
+    glEnd();
+}
+
 void setChopperKhakiColor() {
     const GLfloat diff[] = {0.623529, 0.623529, 0.372549, 1.0};
     const GLfloat spec[] = {0.623529, 0.623529, 0.372549, 1.0};
@@ -178,7 +261,18 @@ void setChopperKhakiColor() {
     glMaterialfv(GL_FRONT, GL_AMBIENT, amb);
     glMaterialfv(GL_FRONT, GL_DIFFUSE, diff);
     glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
-    glMaterialf(GL_FRONT, GL_SHININESS, 30);
+    glMaterialf(GL_FRONT, GL_SHININESS, 80);
+}
+
+void setChopperRotorColor() {
+    const GLfloat diff[] = {0.6, 0.6, 0.6, 1.0};
+    const GLfloat spec[] = {0.6, 0.6, 0.6, 1.0};
+    const GLfloat amb[] = {0.1, 0.1, 0.1, 1.0};
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT, amb);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, diff);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
+    glMaterialf(GL_FRONT, GL_SHININESS, 30.0);
 }
 
 void drawChopperTail() {
@@ -187,6 +281,10 @@ void drawChopperTail() {
     int stacks = 40;
     float height = 1.0;
     float r = 0.06;
+
+    glPushMatrix();
+    glTranslatef(0, 0, 1.1);
+    glRotatef(90, 1, 0, 0);
 
     // oldalfal
     glBegin(GL_TRIANGLE_STRIP);
@@ -200,16 +298,6 @@ void drawChopperTail() {
     }
     glEnd();
 
-//    // elso fedolap
-//    glNormal3f(0, -1, 0);
-//    glBegin(GL_TRIANGLE_FAN);
-//    glVertex3f(0, -height / 2.0f, 0);
-//    for (int i = 0; i <= stacks; i++) {
-//        float alpha = (2 * M_PI * (i % stacks)) / stacks;
-//        glVertex3f(r * sin(alpha), -height / 2.0f, r * cos(alpha));
-//    }
-//    glEnd();
-
     //hátsó fedolap
     glNormal3f(0, 1, 0);
     glBegin(GL_TRIANGLE_FAN);
@@ -219,6 +307,53 @@ void drawChopperTail() {
         glVertex3f(r * sin(alpha), height / 2.0f, r * cos(alpha));
     }
     glEnd();
+
+    glPopMatrix();
+}
+
+void drawMainRotor() {
+    setChopperRotorColor();
+
+    glPushMatrix();
+    glRotatef(25, 0, 1, 0);
+
+    glPushMatrix();
+    glTranslatef(0, 0.3, 0.12);
+    drawCuboid(0.1, 1.0, 0.02);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(-1.0, 0.3, 0.12);
+    drawCuboid(0.1, 1.0, 0.02);
+    glPopMatrix();
+
+    glPopMatrix();
+}
+
+void drawTailRotor() {
+    setChopperRotorColor();
+
+    glPushMatrix();
+    glTranslatef(-0.06, 0, 1.55);
+    glRotatef(90, 0, 0, 1);
+
+    glPushMatrix();
+    glTranslatef(0, 0, 0.03);
+    drawCuboid(0.02, 0.3, 0.01);
+    glPopMatrix();
+
+    glPushMatrix();
+    glRotatef(135, 0, 1, 0);
+    drawCuboid(0.02, 0.3, 0.01);
+    glPopMatrix();
+
+    glPushMatrix();
+    glRotatef(225, 0, 1, 0);
+    drawCuboid(0.02, 0.3, 0.01);
+    glPopMatrix();
+
+    glPopMatrix();
+
 }
 
 void drawChopper() {
@@ -293,11 +428,9 @@ void drawChopper() {
     glDisable(GL_BLEND);
     glPopMatrix();
 
-    glPushMatrix();
-    glTranslatef(0, 0, 1.1);
-    glRotatef(90, 1, 0, 0);
+    drawMainRotor();
     drawChopperTail();
-    glPopMatrix();
+    drawTailRotor();
 }
 
 void drawSphere() {
@@ -348,7 +481,6 @@ void drawSphere() {
 }
 
 void drawBuilding(double x, double z) {
-    const int size = 1;
 
     const GLfloat diff[] = {0.91, 0.0, 0.0, 1.0};
     const GLfloat spec[] = {0.1, 0.00, 0.0, 1.0};
@@ -360,77 +492,8 @@ void drawBuilding(double x, double z) {
     glMaterialf(GL_FRONT, GL_SHININESS, 10.0);
 
     glPushMatrix();
-    glTranslatef(x, -4.5, z);
-    glScalef(0.5, 0.5, 0.5);
-
-    //top
-    glBegin(GL_QUADS);
-    glNormal3f(0, 1, 0);
-    glVertex3f(0, 0, 0);
-
-    glNormal3f(0, 1, 0);
-    glVertex3f(0, 0, size);
-
-    glNormal3f(0, 1, 0);
-    glVertex3f(size, 0, size);
-
-    glNormal3f(0, 1, 0);
-    glVertex3f(size, 0, 0);
-
-    //front
-    glNormal3f(0, 0, 1);
-    glVertex3f(0, 0, size);
-
-    glNormal3f(0, 0, 1);
-    glVertex3f(size, 0, size);
-
-    glNormal3f(0, 0, 1);
-    glVertex3f(size, -size, size);
-
-    glNormal3f(0, 0, 1);
-    glVertex3f(0, -size, size);
-
-    //back
-    glNormal3f(0, 0, -1);
-    glVertex3f(0, 0, 0);
-
-    glNormal3f(0, 0, -1);
-    glVertex3f(size, 0, 0);
-
-    glNormal3f(0, 0, -1);
-    glVertex3f(size, -size, 0);
-
-    glNormal3f(0, 0, -1);
-    glVertex3f(0, -size, 0);
-
-    //right
-    glNormal3f(1, 0, 0);
-    glVertex3f(size, 0, 0);
-
-    glNormal3f(1, 0, 0);
-    glVertex3f(size, 0, size);
-
-    glNormal3f(1, 0, 0);
-    glVertex3f(size, -size, size);
-
-    glNormal3f(1, 0, 0);
-    glVertex3f(size, -size, 0);
-
-    //left
-    glNormal3f(-1, 0, 0);
-    glVertex3f(0, 0, 0);
-
-    glNormal3f(-1, 0, 0);
-    glVertex3f(0, 0, size);
-
-    glNormal3f(-1, 0, 0);
-    glVertex3f(0, -size, size);
-
-    glNormal3f(-1, 0, 0);
-    glVertex3f(0, -size, 0);
-
-    glEnd();
-
+    glTranslatef(x, -5, z);
+    drawCuboid(0.5, 0.75, 0.5);
     glPopMatrix();
 }
 
@@ -441,7 +504,7 @@ void drawField() {
     glBindTexture(GL_TEXTURE_2D, fieldTexture);
 
     const GLfloat diff[] = {0.0, 0.91, 0.0, 1.0};
-    const GLfloat spec[] = {0.0, 0.01, 0.0, 1.0};
+    const GLfloat spec[] = {0.0, 0.91, 0.0, 1.0};
     const GLfloat amb[] = {0.1, 0.4, 0.1, 1.0};
 
     glMaterialfv(GL_FRONT, GL_AMBIENT, amb);
