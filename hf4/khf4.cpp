@@ -300,8 +300,8 @@ void drawSphere() {
 void drawField() {
     static const float d = 0.02f;
 
-    //    glEnable(GL_TEXTURE_2D);
-    //    glBindTexture(GL_TEXTURE_2D, fieldTexture);
+    //        glEnable(GL_TEXTURE_2D);
+    //        glBindTexture(GL_TEXTURE_2D, fieldTexture);
 
     const GLfloat diff[] = {0.0, 0.91, 0.0, 1.0};
     const GLfloat spec[] = {0.0, 0.01, 0.0, 1.0};
@@ -315,8 +315,8 @@ void drawField() {
     glPushMatrix();
     glScalef(FIELD_WIDTH, 1, FIELD_LONG);
     glTranslatef(0, -5, -1);
-    glBegin(GL_QUADS);
     glNormal3f(0, 1, 0);
+    glBegin(GL_QUADS);
     for (float x = -1.0f; x < 1.0f; x += d) {
         for (float z = -1.0f; z < 1.0f; z += d) {
             glTexCoord2f(x, z);
@@ -332,10 +332,9 @@ void drawField() {
             glVertex3f(x, 0, -(z + d));
         }
     }
-
     glEnd();
     glPopMatrix();
-    //    glDisable(GL_TEXTURE_2D);
+    //        glDisable(GL_TEXTURE_2D);
 }
 
 void setLight(Vector sunPosv) {
@@ -361,10 +360,9 @@ void initFieldTexture() {
      * Forras: https://github.com/tmichel/Grafika-hf-2011-osz/blob/master/khf4.cpp#L919
      */
     unsigned char image[FIELD_WIDTH][FIELD_LONG][3];
-    unsigned int tex[1];
-    glGenTextures(1, tex);
+    glGenTextures(1, &fieldTexture);
 
-    glBindTexture(GL_TEXTURE_2D, tex[0]);
+    glBindTexture(GL_TEXTURE_2D, fieldTexture);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -378,8 +376,6 @@ void initFieldTexture() {
     }
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, FIELD_WIDTH, FIELD_LONG, 0,
             GL_RGB, GL_UNSIGNED_BYTE, image);
-
-    fieldTexture = tex[0];
 }
 
 void onInitialization() {
