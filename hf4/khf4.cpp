@@ -170,15 +170,59 @@ unsigned int fieldTexture;
 const int FIELD_WIDTH = 30;
 const int FIELD_LONG = 50;
 
-void drawChopper() {
+void setChopperKhakiColor() {
     const GLfloat diff[] = {0.623529, 0.623529, 0.372549, 1.0};
     const GLfloat spec[] = {0.623529, 0.623529, 0.372549, 1.0};
-    const GLfloat amb[] = {0.4, 0.4, 0.4, 1.0};
+    const GLfloat amb[] = {0.1, 0.1, 0.1, 1.0};
 
     glMaterialfv(GL_FRONT, GL_AMBIENT, amb);
     glMaterialfv(GL_FRONT, GL_DIFFUSE, diff);
     glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
     glMaterialf(GL_FRONT, GL_SHININESS, 30);
+}
+
+void drawChopperTail() {
+    setChopperKhakiColor();
+
+    int stacks = 40;
+    float height = 1.0;
+    float r = 0.06;
+
+    // oldalfal
+    glBegin(GL_TRIANGLE_STRIP);
+    for (int i = 0; i <= stacks; i++) {
+        float alpha = (2 * M_PI * (i % stacks)) / stacks;
+        float x = r * sin(alpha);
+        float z = r * cos(alpha);
+        glNormal3f(sin(alpha), 0, cos(alpha));
+        glVertex3f(x, -height / 2.0f, z);
+        glVertex3f(x, height / 2.0f, z);
+    }
+    glEnd();
+
+//    // elso fedolap
+//    glNormal3f(0, -1, 0);
+//    glBegin(GL_TRIANGLE_FAN);
+//    glVertex3f(0, -height / 2.0f, 0);
+//    for (int i = 0; i <= stacks; i++) {
+//        float alpha = (2 * M_PI * (i % stacks)) / stacks;
+//        glVertex3f(r * sin(alpha), -height / 2.0f, r * cos(alpha));
+//    }
+//    glEnd();
+
+    //hátsó fedolap
+    glNormal3f(0, 1, 0);
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex3f(0, height / 2.0f, 0);
+    for (int i = 0; i <= stacks; i++) {
+        float alpha = (2 * M_PI * (i % stacks)) / stacks;
+        glVertex3f(r * sin(alpha), height / 2.0f, r * cos(alpha));
+    }
+    glEnd();
+}
+
+void drawChopper() {
+    setChopperKhakiColor();
 
     const float fA = 0.4;
     const float fB = 0.6;
@@ -247,6 +291,12 @@ void drawChopper() {
     }
     glEnd();
     glDisable(GL_BLEND);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0, 0, 1.1);
+    glRotatef(90, 1, 0, 0);
+    drawChopperTail();
     glPopMatrix();
 }
 
@@ -499,7 +549,7 @@ void onInitialization() {
     glShadeModel(GL_SMOOTH);
     glDisable(GL_TEXTURE_2D);
 
-    cam.pos = Vector(0.0, 1.0, 2.0);
+    cam.pos = Vector(0.0, 1.3, 3);
     sunPos = Vector(0.0, 3, 3);
     setLight(sunPos);
 }
