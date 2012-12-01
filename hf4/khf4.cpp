@@ -504,8 +504,8 @@ void drawField() {
     glBindTexture(GL_TEXTURE_2D, fieldTexture);
 
     const GLfloat diff[] = {0.0, 0.91, 0.0, 1.0};
-    const GLfloat spec[] = {0.0, 0.91, 0.0, 1.0};
-    const GLfloat amb[] = {0.1, 0.4, 0.1, 1.0};
+    const GLfloat spec[] = {0.0, 0.0, 0.0, 1.0};
+    const GLfloat amb[] = {0.1, 0.9, 0.1, 1.0};
 
     glMaterialfv(GL_FRONT, GL_AMBIENT, amb);
     glMaterialfv(GL_FRONT, GL_DIFFUSE, diff);
