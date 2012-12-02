@@ -103,6 +103,10 @@ struct Vector {
         return sqrt(x * x + y * y + z * z);
     }
 
+    Vector getNormalized() {
+        return (*this) * (1.0 / Length());
+    }
+
     void dump() {
         cout << "x,y,z=" << x << "; " << y << "; " << z << endl;
     }
@@ -156,6 +160,70 @@ public:
         cout << "up=" << up.x << "; " << up.y << "; " << up.z << endl;
     }
 };
+
+/*
+ * Forras: Dr. Szirmay-Kalos László, Antal György, Csonka Ferenc:
+ * Háromdimenziós grafika, animáció és játékfejlesztés, 318. old.
+ * Computerbooks, Budapest, 2004
+ */
+struct Quaternion {
+    double s;
+    Vector d;
+public:
+
+    Quaternion() : d(0, 0, 0) {
+        s = 1;
+    }
+
+    Quaternion(double s0, double x0, double y0, double z0) : d(x0, y0, z0) {
+        s = s0;
+    }
+
+    Quaternion(double s0, Vector d0) : d(d0) {
+        s = s0;
+    }
+
+    Quaternion operator+(Quaternion q) {
+        return Quaternion(s + q.s, d + q.d);
+    }
+
+    Quaternion operator*(double f) {
+        return Quaternion(s * f, d * f);
+    }
+
+    double operator*(Quaternion q) {
+        return (s * s + d * d);
+    }
+
+    void Normalize() {
+        float length = (*this) * (*this);
+        (*this) = (*this) * (1 / sqrt(length));
+    }
+
+    Quaternion operator%(Quaternion q) {
+        return Quaternion(s * q.s - d * q.d, q.d * s + d * q.s + d % q.d);
+    }
+
+    float GetRotationAngle() {
+        float cosa2 = s;
+        float sina2 = d.Length();
+        float angRad = atan2(sina2, cosa2) * 2;
+        return angRad * 180 / M_PI;
+    }
+
+    Vector GetAxis() {
+        return d;
+    }
+
+    //TODO: refactor
+
+    Quaternion getInversed() {
+        Quaternion num = Quaternion(s, (d * -1));
+        float den = s * s + d.x * d.x + d.y * d.y + d.z * d.z;
+        Quaternion ret = num * (1 / den);
+        return ret;
+    }
+};
 // </editor-fold>
 
 const int screenWidth = 600;
@@ -165,7 +233,11 @@ Color image[screenWidth*screenHeight];
 
 Camera cam;
 Vector sunPos;
+Quaternion globalQuat = Quaternion();
+Vector arrowAxisOfRot;
+double rotation = 20 * (M_PI / 180.0) / 2.0;
 unsigned int fieldTexture;
+const double d = 0.02;
 
 const int FIELD_WIDTH = 30;
 const int FIELD_LONG = 50;
@@ -275,36 +347,87 @@ void setChopperRotorColor() {
     glMaterialf(GL_FRONT, GL_SHININESS, 30.0);
 }
 
+void drawCylinder(double r, double height) {
+    const int stacks = 40;
+    glBegin(GL_TRIANGLE_STRIP);
+    for (int i = 0; i <= stacks; i++) {
+        float rad = (2 * M_PI * (i % stacks)) / stacks;
+        float x = r * sin(rad);
+        float z = r * cos(rad);
+        glNormal3f(sin(rad), 0, cos(rad));
+        glVertex3f(x, 0, z);
+        glVertex3f(x, height, z);
+    }
+    glEnd();
+}
+
+void drawQuatArrow() {
+    int stacks = 40;
+    float height = 1.2;
+    float r_cylinder = 0.02;
+    float r_cone = r_cylinder + 0.05;
+
+    const GLfloat diff[] = {0.9, 0.0, 0.0, 1.0};
+    const GLfloat spec[] = {0.9, 0.0, 0.0, 1.0};
+    const GLfloat amb[] = {0.0, 0.0, 0.0, 0.0};
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT, amb);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, diff);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
+    glMaterialf(GL_FRONT, GL_SHININESS, 80);
+
+    glPushMatrix();
+    glRotatef(180, arrowAxisOfRot.x, arrowAxisOfRot.y, arrowAxisOfRot.z);
+
+    //henger palast
+    drawCylinder(r_cylinder, height);
+
+    //kup alapja
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0, 1, 0);
+    glVertex3f(0, height, 0);
+    for (int i = 0; i <= stacks; i++) {
+        float rad = (2 * M_PI * (i % stacks)) / stacks;
+        glNormal3f(0, -1, 0);
+        glVertex3f(r_cone * sin(rad), height, r_cone * cos(rad));
+    }
+    glEnd();
+
+    // kup palást
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(1, 1, 1);
+    glVertex3f(0, height + r_cone, 0);
+    for (int i = 0; i <= stacks; i++) {
+        float rad = (2 * M_PI * (i % stacks)) / stacks;
+        glNormal3f(sin(rad), 0, cos(rad));
+        glVertex3f(r_cone * sin(rad), height, r_cone * cos(rad));
+    }
+    glEnd();
+
+    glPopMatrix();
+}
+
 void drawChopperTail() {
     setChopperKhakiColor();
 
     int stacks = 40;
-    float height = 1.0;
+    float height = 1;
     float r = 0.06;
 
     glPushMatrix();
-    glTranslatef(0, 0, 1.1);
+    glTranslatef(0, 0, 0.6);
     glRotatef(90, 1, 0, 0);
 
-    // oldalfal
-    glBegin(GL_TRIANGLE_STRIP);
-    for (int i = 0; i <= stacks; i++) {
-        float alpha = (2 * M_PI * (i % stacks)) / stacks;
-        float x = r * sin(alpha);
-        float z = r * cos(alpha);
-        glNormal3f(sin(alpha), 0, cos(alpha));
-        glVertex3f(x, -height / 2.0f, z);
-        glVertex3f(x, height / 2.0f, z);
-    }
-    glEnd();
+    // palást
+    drawCylinder(r, height);
 
     //hátsó fedolap
     glNormal3f(0, 1, 0);
     glBegin(GL_TRIANGLE_FAN);
-    glVertex3f(0, height / 2.0f, 0);
+    glVertex3f(0, height, 0);
     for (int i = 0; i <= stacks; i++) {
-        float alpha = (2 * M_PI * (i % stacks)) / stacks;
-        glVertex3f(r * sin(alpha), height / 2.0f, r * cos(alpha));
+        float rad = (2 * M_PI * (i % stacks)) / stacks;
+        glVertex3f(r * sin(rad), height, r * cos(rad));
     }
     glEnd();
 
@@ -359,9 +482,12 @@ void drawTailRotor() {
 void drawChopper() {
     setChopperKhakiColor();
 
-    const float fA = 0.4;
-    const float fB = 0.6;
-    const float fC = 0.3;
+    glPushMatrix();
+    glRotatef(globalQuat.GetRotationAngle(), globalQuat.GetAxis().x, globalQuat.GetAxis().y, globalQuat.GetAxis().z);
+
+    const float ellopse_a = 0.4;
+    const float ellopse_b = 0.6;
+    const float ellopse_c = 0.3;
 
     const float tStep = (M_PI) / 60.0;
     const float sStep = (M_PI) / 50.0;
@@ -374,11 +500,11 @@ void drawChopper() {
         if (t <= M_PI && t >= -M_PI * 0.5) {
             for (float s = -M_PI; s <= M_PI + 0.0001; s += sStep) {
                 if (s <= 0) {
-                    glNormal3f(fA * cos(t) * cos(s), fB * cos(t) * sin(s), fC * sin(t));
-                    glVertex3f(fA * cos(t) * cos(s), fB * cos(t) * sin(s), fC * sin(t));
+                    glNormal3f(ellopse_a * cos(t) * cos(s), ellopse_b * cos(t) * sin(s), ellopse_c * sin(t));
+                    glVertex3f(ellopse_a * cos(t) * cos(s), ellopse_b * cos(t) * sin(s), ellopse_c * sin(t));
 
-                    glNormal3f(fA * cos(t + tStep) * cos(s), fB * cos(t + tStep) * sin(s), fC * sin(t + tStep));
-                    glVertex3f(fA * cos(t + tStep) * cos(s), fB * cos(t + tStep) * sin(s), fC * sin(t + tStep));
+                    glNormal3f(ellopse_a * cos(t + tStep) * cos(s), ellopse_b * cos(t + tStep) * sin(s), ellopse_c * sin(t + tStep));
+                    glVertex3f(ellopse_a * cos(t + tStep) * cos(s), ellopse_b * cos(t + tStep) * sin(s), ellopse_c * sin(t + tStep));
                 }
             }
         }
@@ -386,11 +512,11 @@ void drawChopper() {
         if (t >= 0) {
             for (float s = -M_PI; s <= M_PI + 0.0001; s += sStep) {
                 if (s >= -0.1) {
-                    glNormal3f(fA * cos(t) * cos(s), fB * cos(t) * sin(s), fC * sin(t));
-                    glVertex3f(fA * cos(t) * cos(s), fB * cos(t) * sin(s), fC * sin(t));
+                    glNormal3f(ellopse_a * cos(t) * cos(s), ellopse_b * cos(t) * sin(s), ellopse_c * sin(t));
+                    glVertex3f(ellopse_a * cos(t) * cos(s), ellopse_b * cos(t) * sin(s), ellopse_c * sin(t));
 
-                    glNormal3f(fA * cos(t + tStep) * cos(s), fB * cos(t + tStep) * sin(s), fC * sin(t + tStep));
-                    glVertex3f(fA * cos(t + tStep) * cos(s), fB * cos(t + tStep) * sin(s), fC * sin(t + tStep));
+                    glNormal3f(ellopse_a * cos(t + tStep) * cos(s), ellopse_b * cos(t + tStep) * sin(s), ellopse_c * sin(t + tStep));
+                    glVertex3f(ellopse_a * cos(t + tStep) * cos(s), ellopse_b * cos(t + tStep) * sin(s), ellopse_c * sin(t + tStep));
                 }
             }
         }
@@ -415,11 +541,11 @@ void drawChopper() {
         if (t <= 0) {
             for (float s = -M_PI; s <= M_PI + 0.0001; s += sStep) {
                 if (s >= -0.1) {
-                    glNormal3f(fA * cos(t) * cos(s), fB * cos(t) * sin(s), fC * sin(t));
-                    glVertex3f(fA * cos(t) * cos(s), fB * cos(t) * sin(s), fC * sin(t));
+                    glNormal3f(ellopse_a * cos(t) * cos(s), ellopse_b * cos(t) * sin(s), ellopse_c * sin(t));
+                    glVertex3f(ellopse_a * cos(t) * cos(s), ellopse_b * cos(t) * sin(s), ellopse_c * sin(t));
 
-                    glNormal3f(fA * cos(t + tStep) * cos(s), fB * cos(t + tStep) * sin(s), fC * sin(t + tStep));
-                    glVertex3f(fA * cos(t + tStep) * cos(s), fB * cos(t + tStep) * sin(s), fC * sin(t + tStep));
+                    glNormal3f(ellopse_a * cos(t + tStep) * cos(s), ellopse_b * cos(t + tStep) * sin(s), ellopse_c * sin(t + tStep));
+                    glVertex3f(ellopse_a * cos(t + tStep) * cos(s), ellopse_b * cos(t + tStep) * sin(s), ellopse_c * sin(t + tStep));
                 }
             }
         }
@@ -431,13 +557,18 @@ void drawChopper() {
     drawMainRotor();
     drawChopperTail();
     drawTailRotor();
+
+    drawQuatArrow();
+
+    glPopMatrix();
 }
+
+//TODO: törölni
 
 void drawSphere() {
     glPushMatrix();
     glTranslatef(sunPos.x, sunPos.y, sunPos.z);
     glScalef(0.1, 0.1, 0.1);
-    static const float d = 0.02f;
 
     const GLfloat diff[] = {1.0, 0.0, 0.6, 1.0};
     const GLfloat spec[] = {1.0, 0.85, 0.6, 1.0};
@@ -498,8 +629,6 @@ void drawBuilding(double x, double z) {
 }
 
 void drawField() {
-    static const float d = 0.02f;
-
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, fieldTexture);
 
@@ -637,6 +766,8 @@ void onDisplay() {
 }
 
 void onKeyboard(unsigned char key, int x, int y) {
+    static Vector originalAxis = Vector(0, 1, 0);
+
     if (key == 'q') {
         exit(0);
     }
@@ -644,9 +775,23 @@ void onKeyboard(unsigned char key, int x, int y) {
     //Roll
     if (key == 'R') {
         //növel 20 fokkal
+
+        // Kiszámoljuk az új forgatási tengelyt, Vector(1, 0, 0) azt jelenti hogy x tengelyen szeretnénk forgatni
+        // ez lényegében egy tengely transzformáció, megadja hogy melyik tengelyek mentén kell forgassunk, hogy
+        // x tengely mentén forogjon a heli ... ha y mentén szeretnénk forgatni akkor Vector(0, 1, 0) ha z akkor Vector(0, 0, 1)
+        Quaternion newRotationAxises = globalQuat % Quaternion(0, Vector::X()) % globalQuat.getInversed();
+
+        Quaternion rotationQuat = Quaternion(cos(rotation), newRotationAxises.d * sin(rotation));
+        globalQuat = rotationQuat % globalQuat;
+
     }
     if (key == 'E') {
         //csökkent 20 fokkal
+
+        Quaternion newRotationAxis = globalQuat % Quaternion(0, Vector::X()) % globalQuat.getInversed();
+
+        Quaternion rotationQuat = Quaternion(cos(-rotation), newRotationAxis.d * sin(-rotation));
+        globalQuat = rotationQuat % globalQuat;
     }
 
     //Pitch
@@ -699,6 +844,9 @@ void onKeyboard(unsigned char key, int x, int y) {
         cam.pos.z += 0.2;
         cam.dump();
     }
+
+    Vector normalizedQuatAxis = globalQuat.GetAxis().getNormalized();
+    arrowAxisOfRot = (originalAxis + normalizedQuatAxis)*0.5;
 
     glutPostRedisplay();
 }
