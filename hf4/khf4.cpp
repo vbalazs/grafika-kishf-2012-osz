@@ -238,89 +238,93 @@ Vector arrowAxisOfRot;
 double rotation = 20 * (M_PI / 180.0) / 2.0;
 unsigned int fieldTexture;
 const double d = 0.02;
+double mainRotorDeg = 25;
+double tailRotorDeg = 25;
 
 const int FIELD_WIDTH = 30;
 const int FIELD_LONG = 50;
 
 void drawCuboid(double a, double b, double height) {
     glBegin(GL_QUADS);
+    double d_a = a / 2.0;
+
     //bottom
     glNormal3f(0, -1, 0);
-    glVertex3f(0, 0, 0);
+    glVertex3f(-d_a, 0, 0);
 
     glNormal3f(0, -1, 0);
-    glVertex3f(0, 0, -a);
+    glVertex3f(-d_a, 0, -b);
 
     glNormal3f(0, -1, 0);
-    glVertex3f(b, 0, -a);
+    glVertex3f(d_a, 0, -b);
 
     glNormal3f(0, -1, 0);
-    glVertex3f(b, 0, 0);
+    glVertex3f(d_a, 0, 0);
 
     //top
     glNormal3f(0, 1, 0);
-    glVertex3f(0, height, 0);
+    glVertex3f(-d_a, height, 0);
 
     glNormal3f(0, 1, 0);
-    glVertex3f(0, height, -a);
+    glVertex3f(-d_a, height, -b);
 
     glNormal3f(0, 1, 0);
-    glVertex3f(b, height, -a);
+    glVertex3f(d_a, height, -b);
 
     glNormal3f(0, 1, 0);
-    glVertex3f(b, height, 0);
+    glVertex3f(d_a, height, 0);
 
     //back
     glNormal3f(0, 0, -1);
-    glVertex3f(0, 0, -a);
+    glVertex3f(-d_a, 0, -b);
 
     glNormal3f(0, 0, -1);
-    glVertex3f(b, 0, -a);
+    glVertex3f(-d_a, height, -b);
 
     glNormal3f(0, 0, -1);
-    glVertex3f(b, height, -a);
+    glVertex3f(d_a, height, -b);
 
     glNormal3f(0, 0, -1);
-    glVertex3f(0, height, -a);
+    glVertex3f(d_a, 0, -b);
 
     //front
     glNormal3f(0, 0, 1);
-    glVertex3f(0, 0, 0);
+    glVertex3f(-d_a, 0, 0);
 
     glNormal3f(0, 0, 1);
-    glVertex3f(b, 0, 0);
+    glVertex3f(-d_a, height, 0);
 
     glNormal3f(0, 0, 1);
-    glVertex3f(b, height, 0);
+    glVertex3f(d_a, height, 0);
 
     glNormal3f(0, 0, 1);
-    glVertex3f(0, height, 0);
+    glVertex3f(d_a, 0, 0);
 
     //right
     glNormal3f(1, 0, 0);
-    glVertex3f(b, 0, 0);
+    glVertex3f(d_a, 0, 0);
 
     glNormal3f(1, 0, 0);
-    glVertex3f(b, 0, -a);
+    glVertex3f(d_a, 0, -b);
 
     glNormal3f(1, 0, 0);
-    glVertex3f(b, height, -a);
+    glVertex3f(d_a, height, -b);
 
     glNormal3f(1, 0, 0);
-    glVertex3f(b, height, 0);
+    glVertex3f(d_a, height, 0);
 
     //left
     glNormal3f(-1, 0, 0);
-    glVertex3f(0, 0, 0);
+    glVertex3f(-d_a, 0, 0);
 
     glNormal3f(-1, 0, 0);
-    glVertex3f(0, 0, -a);
+    glVertex3f(-d_a, height, 0);
 
     glNormal3f(-1, 0, 0);
-    glVertex3f(0, height, -a);
+    glVertex3f(-d_a, height, -b);
 
     glNormal3f(-1, 0, 0);
-    glVertex3f(0, height, 0);
+    glVertex3f(-d_a, 0, -b);
 
     glEnd();
 }
@@ -363,7 +367,7 @@ void drawCylinder(double r, double height) {
 
 void drawQuatArrow() {
     int stacks = 40;
-    float height = 1.2;
+    float height = 3.9 * globalQuat.s;
     float r_cylinder = 0.02;
     float r_cone = r_cylinder + 0.05;
 
@@ -438,18 +442,15 @@ void drawMainRotor() {
     setChopperRotorColor();
 
     glPushMatrix();
-    glRotatef(25, 0, 1, 0);
+    glTranslatef(0, 0.3, 0.12);
+    glRotatef(mainRotorDeg, 0, 1, 0);
+    drawCuboid(0.1, 1.0, 0.02);
+    glPopMatrix();
 
     glPushMatrix();
     glTranslatef(0, 0.3, 0.12);
-    drawCuboid(0.1, 1.0, 0.02);
-    glPopMatrix();
-
-    glPushMatrix();
-    glTranslatef(-1.0, 0.3, 0.12);
-    drawCuboid(0.1, 1.0, 0.02);
-    glPopMatrix();
-
+    glRotatef(mainRotorDeg, 0, 1, 0);
+    drawCuboid(0.1, -1.0, 0.02);
     glPopMatrix();
 }
 
@@ -459,6 +460,7 @@ void drawTailRotor() {
     glPushMatrix();
     glTranslatef(-0.06, 0, 1.55);
     glRotatef(90, 0, 0, 1);
+    glRotatef(tailRotorDeg, 0, 1, 0);
 
     glPushMatrix();
     glTranslatef(0, 0, 0.03);
@@ -558,9 +560,9 @@ void drawChopper() {
     drawChopperTail();
     drawTailRotor();
 
-    drawQuatArrow();
-
     glPopMatrix();
+
+    drawQuatArrow();
 }
 
 void drawBuilding(double x, double z) {
@@ -641,9 +643,6 @@ void setLight(Vector sunPosv) {
     float sunColor[] = {0.75, 0.75, 0.67, 1.0};
     float glSunPos[] = {sunPosv.x, sunPosv.y, sunPosv.z, 0};
 
-    cout << "sunPos: ";
-    sunPosv.dump();
-
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, sunColor);
     glLightfv(GL_LIGHT0, GL_POSITION, glSunPos);
@@ -676,6 +675,16 @@ void initFieldTexture() {
             GL_RGB, GL_UNSIGNED_BYTE, image);
 }
 
+void rotateChopper(Vector axis, double rot) {
+    Quaternion newRotationAxises = globalQuat % Quaternion(0, axis) % globalQuat.getInversed();
+
+    Quaternion rotationQuat = Quaternion(cos(rot), newRotationAxises.d * sin(rot));
+    globalQuat = rotationQuat % globalQuat;
+
+    Vector normalizedQuatAxis = globalQuat.GetAxis().getNormalized();
+    arrowAxisOfRot = (Vector::Y() + normalizedQuatAxis)*0.5;
+}
+
 void onInitialization() {
     glViewport(0, 0, screenWidth, screenHeight);
 
@@ -692,9 +701,11 @@ void onInitialization() {
     glShadeModel(GL_SMOOTH);
     glDisable(GL_TEXTURE_2D);
 
-    cam.pos = Vector(0.0, 1.3, 3);
+    cam.pos = Vector(0.0, 2.3, 7);
     sunPos = Vector(0.0, 3, 3);
     setLight(sunPos);
+
+    rotateChopper(Vector::X(), M_PI / 360.0);
 }
 
 void onDisplay() {
@@ -710,8 +721,7 @@ void onDisplay() {
 
     drawChopper();
 
-    glutSwapBuffers(); // Buffercsere: rajzolas vege
-
+    glutSwapBuffers();
 }
 
 void onKeyboard(unsigned char key, int x, int y) {
@@ -722,53 +732,48 @@ void onKeyboard(unsigned char key, int x, int y) {
     //Roll
     if (key == 'R') {
         //növel 20 fokkal
-        Quaternion newRotationAxises = globalQuat % Quaternion(0, Vector::Z()) % globalQuat.getInversed();
-
-        Quaternion rotationQuat = Quaternion(cos(rotation), newRotationAxises.d * sin(rotation));
-        globalQuat = rotationQuat % globalQuat;
+        rotateChopper(Vector::Z(), rotation);
 
     }
     if (key == 'E') {
         //csökkent 20 fokkal
-        Quaternion newRotationAxis = globalQuat % Quaternion(0, Vector::Z()) % globalQuat.getInversed();
-
-        Quaternion rotationQuat = Quaternion(cos(-rotation), newRotationAxis.d * sin(-rotation));
-        globalQuat = rotationQuat % globalQuat;
+        rotateChopper(Vector::Z(), -rotation);
     }
 
     //Pitch
     if (key == 'P') {
         //növel 20 fokkal
-        Quaternion newRotationAxises = globalQuat % Quaternion(0, Vector::Y()) % globalQuat.getInversed();
-
-        Quaternion rotationQuat = Quaternion(cos(rotation), newRotationAxises.d * sin(rotation));
-        globalQuat = rotationQuat % globalQuat;
+        rotateChopper(Vector::Y(), rotation);
     }
     if (key == 'O') {
         //csökkent 20 fokkal
-        Quaternion newRotationAxises = globalQuat % Quaternion(0, Vector::Y()) % globalQuat.getInversed();
-
-        Quaternion rotationQuat = Quaternion(cos(-rotation), newRotationAxises.d * sin(-rotation));
-        globalQuat = rotationQuat % globalQuat;
+        rotateChopper(Vector::Y(), -rotation);
     }
 
     //Yaw
     if (key == 'Y') {
         //növel 20 fokkal
-        Quaternion newRotationAxises = globalQuat % Quaternion(0, Vector::X()) % globalQuat.getInversed();
-
-        Quaternion rotationQuat = Quaternion(cos(rotation), newRotationAxises.d * sin(rotation));
-        globalQuat = rotationQuat % globalQuat;
+        rotateChopper(Vector::X(), rotation);
     }
     if (key == 'X') {
         //csökkent 20 fokkal
-        Quaternion newRotationAxises = globalQuat % Quaternion(0, Vector::X()) % globalQuat.getInversed();
-
-        Quaternion rotationQuat = Quaternion(cos(-rotation), newRotationAxises.d * sin(-rotation));
-        globalQuat = rotationQuat % globalQuat;
+        rotateChopper(Vector::X(), -rotation);
     }
 
     //TODO: törlendõ, csak debug
+    if (key == 'j') {
+        mainRotorDeg += 10;
+        if (mainRotorDeg > 360) {
+            mainRotorDeg -= 360;
+        }
+    }
+
+    if (key == 'k') {
+        tailRotorDeg += 10;
+        if (tailRotorDeg > 360) {
+            tailRotorDeg -= 360;
+        }
+    }
     if (key == 't') {
         cam.pos = Vector(0.0, 1.0, 2.0);
         cam.dump();
@@ -802,9 +807,6 @@ void onKeyboard(unsigned char key, int x, int y) {
         cam.pos.z += 0.2;
         cam.dump();
     }
-
-    Vector normalizedQuatAxis = globalQuat.GetAxis().getNormalized();
-    arrowAxisOfRot = (Vector::Y() + normalizedQuatAxis)*0.5;
 
     glutPostRedisplay();
 }
