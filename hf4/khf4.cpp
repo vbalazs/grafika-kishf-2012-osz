@@ -644,7 +644,6 @@ void setLight(Vector sunPosv) {
     cout << "sunPos: ";
     sunPosv.dump();
 
-    glDisable(GL_COLOR_MATERIAL);
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, sunColor);
     glLightfv(GL_LIGHT0, GL_POSITION, glSunPos);
