@@ -487,38 +487,38 @@ void drawChopper() {
     glPushMatrix();
     glRotatef(globalQuat.GetRotationAngle(), globalQuat.GetAxis().x, globalQuat.GetAxis().y, globalQuat.GetAxis().z);
 
-    const float ellopse_a = 0.4;
-    const float ellopse_b = 0.6;
-    const float ellopse_c = 0.3;
+    const float ellipsoid_a = 0.4;
+    const float ellipsoid_b = 0.6;
+    const float ellipsoid_c = 0.3;
 
-    const float tStep = (M_PI) / 60.0;
-    const float sStep = (M_PI) / 50.0;
+    const float step1 = (M_PI) / 60.0;
+    const float step2 = (M_PI) / 50.0;
 
     glPushMatrix();
     glRotatef(90, 1, 0, 0);
     glRotatef(180, 0, 0, 1);
     glBegin(GL_TRIANGLE_STRIP);
-    for (float t = -M_PI / 2; t <= (M_PI / 2) + 0.0001; t += tStep) {
+    for (float t = -M_PI / 2; t <= (M_PI / 2) + 0.0001; t += step1) {
         if (t <= M_PI && t >= -M_PI * 0.5) {
-            for (float s = -M_PI; s <= M_PI + 0.0001; s += sStep) {
+            for (float s = -M_PI; s <= M_PI + 0.0001; s += step2) {
                 if (s <= 0) {
-                    glNormal3f(ellopse_a * cos(t) * cos(s), ellopse_b * cos(t) * sin(s), ellopse_c * sin(t));
-                    glVertex3f(ellopse_a * cos(t) * cos(s), ellopse_b * cos(t) * sin(s), ellopse_c * sin(t));
+                    glNormal3f(ellipsoid_a * cos(t) * cos(s), ellipsoid_b * cos(t) * sin(s), ellipsoid_c * sin(t));
+                    glVertex3f(ellipsoid_a * cos(t) * cos(s), ellipsoid_b * cos(t) * sin(s), ellipsoid_c * sin(t));
 
-                    glNormal3f(ellopse_a * cos(t + tStep) * cos(s), ellopse_b * cos(t + tStep) * sin(s), ellopse_c * sin(t + tStep));
-                    glVertex3f(ellopse_a * cos(t + tStep) * cos(s), ellopse_b * cos(t + tStep) * sin(s), ellopse_c * sin(t + tStep));
+                    glNormal3f(ellipsoid_a * cos(t + step1) * cos(s), ellipsoid_b * cos(t + step1) * sin(s), ellipsoid_c * sin(t + step1));
+                    glVertex3f(ellipsoid_a * cos(t + step1) * cos(s), ellipsoid_b * cos(t + step1) * sin(s), ellipsoid_c * sin(t + step1));
                 }
             }
         }
 
         if (t >= 0) {
-            for (float s = -M_PI; s <= M_PI + 0.0001; s += sStep) {
+            for (float s = -M_PI; s <= M_PI + 0.0001; s += step2) {
                 if (s >= -0.1) {
-                    glNormal3f(ellopse_a * cos(t) * cos(s), ellopse_b * cos(t) * sin(s), ellopse_c * sin(t));
-                    glVertex3f(ellopse_a * cos(t) * cos(s), ellopse_b * cos(t) * sin(s), ellopse_c * sin(t));
+                    glNormal3f(ellipsoid_a * cos(t) * cos(s), ellipsoid_b * cos(t) * sin(s), ellipsoid_c * sin(t));
+                    glVertex3f(ellipsoid_a * cos(t) * cos(s), ellipsoid_b * cos(t) * sin(s), ellipsoid_c * sin(t));
 
-                    glNormal3f(ellopse_a * cos(t + tStep) * cos(s), ellopse_b * cos(t + tStep) * sin(s), ellopse_c * sin(t + tStep));
-                    glVertex3f(ellopse_a * cos(t + tStep) * cos(s), ellopse_b * cos(t + tStep) * sin(s), ellopse_c * sin(t + tStep));
+                    glNormal3f(ellipsoid_a * cos(t + step1) * cos(s), ellipsoid_b * cos(t + step1) * sin(s), ellipsoid_c * sin(t + step1));
+                    glVertex3f(ellipsoid_a * cos(t + step1) * cos(s), ellipsoid_b * cos(t + step1) * sin(s), ellipsoid_c * sin(t + step1));
                 }
             }
         }
@@ -539,15 +539,15 @@ void drawChopper() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glBegin(GL_TRIANGLE_STRIP);
-    for (float t = -M_PI / 2; t <= (M_PI / 2) + 0.0001; t += tStep) {
+    for (float t = -M_PI / 2; t <= (M_PI / 2) + 0.0001; t += step1) {
         if (t <= 0) {
-            for (float s = -M_PI; s <= M_PI + 0.0001; s += sStep) {
+            for (float s = -M_PI; s <= M_PI + 0.0001; s += step2) {
                 if (s >= -0.1) {
-                    glNormal3f(ellopse_a * cos(t) * cos(s), ellopse_b * cos(t) * sin(s), ellopse_c * sin(t));
-                    glVertex3f(ellopse_a * cos(t) * cos(s), ellopse_b * cos(t) * sin(s), ellopse_c * sin(t));
+                    glNormal3f(ellipsoid_a * cos(t) * cos(s), ellipsoid_b * cos(t) * sin(s), ellipsoid_c * sin(t));
+                    glVertex3f(ellipsoid_a * cos(t) * cos(s), ellipsoid_b * cos(t) * sin(s), ellipsoid_c * sin(t));
 
-                    glNormal3f(ellopse_a * cos(t + tStep) * cos(s), ellopse_b * cos(t + tStep) * sin(s), ellopse_c * sin(t + tStep));
-                    glVertex3f(ellopse_a * cos(t + tStep) * cos(s), ellopse_b * cos(t + tStep) * sin(s), ellopse_c * sin(t + tStep));
+                    glNormal3f(ellipsoid_a * cos(t + step1) * cos(s), ellipsoid_b * cos(t + step1) * sin(s), ellipsoid_c * sin(t + step1));
+                    glVertex3f(ellipsoid_a * cos(t + step1) * cos(s), ellipsoid_b * cos(t + step1) * sin(s), ellipsoid_c * sin(t + step1));
                 }
             }
         }
