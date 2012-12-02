@@ -162,9 +162,7 @@ public:
 };
 
 /*
- * Forras: Dr. Szirmay-Kalos László, Antal György, Csonka Ferenc:
- * Háromdimenziós grafika, animáció és játékfejlesztés, 318. old.
- * Computerbooks, Budapest, 2004
+ * Forras alapjan (módosítva): Szirmay-Kalos László, 2001. November.
  */
 struct Quaternion {
     double s;
@@ -215,13 +213,21 @@ public:
         return d;
     }
 
-    //TODO: refactor
+    //    Quaternion getInversed() {
+    //        Quaternion num = Quaternion(s, (d * -1));
+    //        float den = s * s + d.x * d.x + d.y * d.y + d.z * d.z;
+    //        return (num * (1 / den));
+    //    }
 
+    /*
+     * Keplet forrása:
+     * http://www.mathworks.com/help/aeroblks/quaternioninverse.html
+     */
     Quaternion getInversed() {
         Quaternion num = Quaternion(s, (d * -1));
-        float den = s * s + d.x * d.x + d.y * d.y + d.z * d.z;
-        Quaternion ret = num * (1 / den);
-        return ret;
+        const float denom = pow(s, 2) + pow(d.x, 2) + pow(d.y, 2) + pow(d.z, 2);
+
+        return (num * (1 / denom));
     }
 };
 // </editor-fold>
@@ -563,8 +569,9 @@ void drawChopper() {
     glPopMatrix();
 }
 
-//TODO: törölni
-
+/*
+ * TODO: törölni
+ */
 void drawSphere() {
     glPushMatrix();
     glTranslatef(sunPos.x, sunPos.y, sunPos.z);
@@ -766,8 +773,6 @@ void onDisplay() {
 }
 
 void onKeyboard(unsigned char key, int x, int y) {
-    static Vector originalAxis = Vector(0, 1, 0);
-
     if (key == 'q') {
         exit(0);
     }
@@ -775,11 +780,7 @@ void onKeyboard(unsigned char key, int x, int y) {
     //Roll
     if (key == 'R') {
         //növel 20 fokkal
-
-        // Kiszámoljuk az új forgatási tengelyt, Vector(1, 0, 0) azt jelenti hogy x tengelyen szeretnénk forgatni
-        // ez lényegében egy tengely transzformáció, megadja hogy melyik tengelyek mentén kell forgassunk, hogy
-        // x tengely mentén forogjon a heli ... ha y mentén szeretnénk forgatni akkor Vector(0, 1, 0) ha z akkor Vector(0, 0, 1)
-        Quaternion newRotationAxises = globalQuat % Quaternion(0, Vector::X()) % globalQuat.getInversed();
+        Quaternion newRotationAxises = globalQuat % Quaternion(0, Vector::Z()) % globalQuat.getInversed();
 
         Quaternion rotationQuat = Quaternion(cos(rotation), newRotationAxises.d * sin(rotation));
         globalQuat = rotationQuat % globalQuat;
@@ -787,8 +788,7 @@ void onKeyboard(unsigned char key, int x, int y) {
     }
     if (key == 'E') {
         //csökkent 20 fokkal
-
-        Quaternion newRotationAxis = globalQuat % Quaternion(0, Vector::X()) % globalQuat.getInversed();
+        Quaternion newRotationAxis = globalQuat % Quaternion(0, Vector::Z()) % globalQuat.getInversed();
 
         Quaternion rotationQuat = Quaternion(cos(-rotation), newRotationAxis.d * sin(-rotation));
         globalQuat = rotationQuat % globalQuat;
@@ -797,20 +797,36 @@ void onKeyboard(unsigned char key, int x, int y) {
     //Pitch
     if (key == 'P') {
         //növel 20 fokkal
+        Quaternion newRotationAxises = globalQuat % Quaternion(0, Vector::Y()) % globalQuat.getInversed();
+
+        Quaternion rotationQuat = Quaternion(cos(rotation), newRotationAxises.d * sin(rotation));
+        globalQuat = rotationQuat % globalQuat;
     }
     if (key == 'O') {
         //csökkent 20 fokkal
+        Quaternion newRotationAxises = globalQuat % Quaternion(0, Vector::Y()) % globalQuat.getInversed();
+
+        Quaternion rotationQuat = Quaternion(cos(-rotation), newRotationAxises.d * sin(-rotation));
+        globalQuat = rotationQuat % globalQuat;
     }
 
     //Yaw
     if (key == 'Y') {
         //növel 20 fokkal
+        Quaternion newRotationAxises = globalQuat % Quaternion(0, Vector::X()) % globalQuat.getInversed();
+
+        Quaternion rotationQuat = Quaternion(cos(rotation), newRotationAxises.d * sin(rotation));
+        globalQuat = rotationQuat % globalQuat;
     }
     if (key == 'X') {
         //csökkent 20 fokkal
+        Quaternion newRotationAxises = globalQuat % Quaternion(0, Vector::X()) % globalQuat.getInversed();
+
+        Quaternion rotationQuat = Quaternion(cos(-rotation), newRotationAxises.d * sin(-rotation));
+        globalQuat = rotationQuat % globalQuat;
     }
 
-    //--- törlendõ, csak debug
+    //TODO: törlendõ, csak debug
     if (key == 't') {
         cam.pos = Vector(0.0, 1.0, 2.0);
         cam.dump();
@@ -846,7 +862,7 @@ void onKeyboard(unsigned char key, int x, int y) {
     }
 
     Vector normalizedQuatAxis = globalQuat.GetAxis().getNormalized();
-    arrowAxisOfRot = (originalAxis + normalizedQuatAxis)*0.5;
+    arrowAxisOfRot = (Vector::Y() + normalizedQuatAxis)*0.5;
 
     glutPostRedisplay();
 }
