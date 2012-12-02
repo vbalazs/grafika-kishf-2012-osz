@@ -213,12 +213,6 @@ public:
         return d;
     }
 
-    //    Quaternion getInversed() {
-    //        Quaternion num = Quaternion(s, (d * -1));
-    //        float den = s * s + d.x * d.x + d.y * d.y + d.z * d.z;
-    //        return (num * (1 / den));
-    //    }
-
     /*
      * Keplet forrása:
      * http://www.mathworks.com/help/aeroblks/quaternioninverse.html
@@ -569,55 +563,6 @@ void drawChopper() {
     glPopMatrix();
 }
 
-/*
- * TODO: törölni
- */
-void drawSphere() {
-    glPushMatrix();
-    glTranslatef(sunPos.x, sunPos.y, sunPos.z);
-    glScalef(0.1, 0.1, 0.1);
-
-    const GLfloat diff[] = {1.0, 0.0, 0.6, 1.0};
-    const GLfloat spec[] = {1.0, 0.85, 0.6, 1.0};
-    const GLfloat amb[] = {0.4, 0.4, 0.4, 1.0};
-
-    glMaterialfv(GL_FRONT, GL_AMBIENT, amb);
-    glMaterialfv(GL_FRONT, GL_DIFFUSE, diff);
-    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
-    glMaterialf(GL_FRONT, GL_SHININESS, 100);
-
-    glBegin(GL_QUADS);
-    for (float u = 0.0f; u < 1.0f; u += d) {
-        for (float v = 0.0f; v < 1.0f; v += d) {
-            float x = cos(2 * M_PI * u) * sin(M_PI * v);
-            float y = sin(2 * M_PI * u) * sin(M_PI * v);
-            float z = cos(M_PI * v);
-            glNormal3f(x, y, z);
-            glVertex3f(x, y, z);
-
-            x = cos(2 * M_PI * (u)) * sin(M_PI * (v + d));
-            y = sin(2 * M_PI * (u)) * sin(M_PI * (v + d));
-            z = cos(M_PI * (v + d));
-            glNormal3f(x, y, z);
-            glVertex3f(x, y, z);
-
-            x = cos(2 * M_PI * (u + d)) * sin(M_PI * (v + d));
-            y = sin(2 * M_PI * (u + d)) * sin(M_PI * (v + d));
-            z = cos(M_PI * (v + d));
-            glNormal3f(x, y, z);
-            glVertex3f(x, y, z);
-
-            x = cos(2 * M_PI * (u + d)) * sin(M_PI * v);
-            y = sin(2 * M_PI * (u + d)) * sin(M_PI * v);
-            z = cos(M_PI * v);
-            glNormal3f(x, y, z);
-            glVertex3f(x, y, z);
-        }
-    }
-    glEnd();
-    glPopMatrix();
-}
-
 void drawBuilding(double x, double z) {
 
     const GLfloat diff[] = {0.91, 0.0, 0.0, 1.0};
@@ -761,8 +706,6 @@ void onDisplay() {
     glLoadIdentity();
 
     cam.lookAt();
-
-    drawSphere();
 
     drawField();
 
