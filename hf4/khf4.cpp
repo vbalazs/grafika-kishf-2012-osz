@@ -367,7 +367,7 @@ void drawCylinder(double r, double height) {
 
 void drawQuatArrow() {
     int stacks = 40;
-    float height = 3.9 * globalQuat.s;
+    float height = 3.9 * fabs(globalQuat.s);
     float r_cylinder = 0.02;
     float r_cone = r_cylinder + 0.05;
 
