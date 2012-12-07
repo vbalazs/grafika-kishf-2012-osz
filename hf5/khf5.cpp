@@ -234,6 +234,9 @@ Color image[screenWidth*screenHeight];
 Camera cam;
 Vector sunPos;
 Quaternion globalQuat = Quaternion();
+Vector chopperDirection(0, 0, -1);
+Vector chopperMoveHere(0, 0, 0);
+
 Vector arrowAxisOfRot;
 double rotation = 20 * (M_PI / 180.0) / 2.0;
 unsigned int fieldTexture;
@@ -487,6 +490,18 @@ void drawChopper() {
     setChopperKhakiColor();
 
     glPushMatrix();
+    glTranslatef(chopperMoveHere.x, chopperMoveHere.y, chopperMoveHere.z);
+
+    //TODO: törölni
+    glPushMatrix();
+    glBegin(GL_LINES);
+    glVertex3f(0, 0, 0);
+    glVertex3f(chopperDirection.x, chopperDirection.y, chopperDirection.z);
+    glEnd();
+    glPopMatrix();
+    //eddig
+
+    glPushMatrix();
     glRotatef(globalQuat.GetRotationAngle(), globalQuat.GetAxis().x, globalQuat.GetAxis().y, globalQuat.GetAxis().z);
 
     const float ellipsoid_a = 0.4;
@@ -501,7 +516,7 @@ void drawChopper() {
     glRotatef(180, 0, 0, 1);
     glBegin(GL_TRIANGLE_STRIP);
     for (float t = -M_PI / 2; t <= (M_PI / 2) + 0.0001; t += step1) {
-        if (t <= M_PI && t >= -M_PI * 0.5) {
+        if (t <= M_PI && t >= -M_PI / 2) {
             for (float s = -M_PI; s <= M_PI + 0.0001; s += step2) {
                 if (s <= 0) {
                     glNormal3f(ellipsoid_a * cos(t) * cos(s), ellipsoid_b * cos(t) * sin(s), ellipsoid_c * sin(t));
@@ -565,6 +580,8 @@ void drawChopper() {
     glPopMatrix();
 
     drawQuatArrow();
+
+    glPopMatrix();
 }
 
 void drawBuilding(double x, double z) {
@@ -677,6 +694,17 @@ void initFieldTexture() {
             GL_RGB, GL_UNSIGNED_BYTE, image);
 }
 
+void recalcChopperDirection() {
+    Quaternion chopperDirectionQuat = globalQuat % Quaternion(1, Vector(0, 0, -1)) % globalQuat.getInversed();
+    chopperDirection = Vector(
+            chopperDirectionQuat.GetAxis().x,
+            chopperDirectionQuat.GetAxis().y,
+            chopperDirectionQuat.GetAxis().z);
+
+    cout << "chopperDirection: ";
+    chopperDirection.dump();
+}
+
 void rotateChopper(Vector axis, double rot) {
     Quaternion newRotationAxises = globalQuat % Quaternion(0, axis) % globalQuat.getInversed();
 
@@ -685,6 +713,8 @@ void rotateChopper(Vector axis, double rot) {
 
     Vector normalizedQuatAxis = globalQuat.GetAxis().getNormalized();
     arrowAxisOfRot = (Vector::Y() + normalizedQuatAxis)*0.5;
+
+    recalcChopperDirection();
 }
 
 void onInitialization() {
@@ -763,6 +793,10 @@ void onKeyboard(unsigned char key, int x, int y) {
     }
 
     //TODO: törlendõ, csak debug
+    if (key == 'k') {
+        chopperMoveHere = chopperMoveHere + chopperDirection;
+    }
+
     if (key == 't') {
         cam.pos = Vector(0.0, 1.0, 2.0);
         cam.dump();
@@ -809,6 +843,8 @@ void simulateWorld(long tstart, long tend) {
 
     if (timeTmp >= DT_50MS) {
         for (long ts = timeTmp; timeTmp > 0; timeTmp -= DT_50MS) {
+
+            chopperMoveHere = chopperMoveHere + (chopperDirection * (1 / (1000 / DT_50MS)));
 
             mainRotorDeg += 20;
             if (mainRotorDeg > 360) {
