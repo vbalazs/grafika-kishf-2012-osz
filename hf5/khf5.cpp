@@ -238,6 +238,8 @@ Vector arrowAxisOfRot;
 double rotation = 20 * (M_PI / 180.0) / 2.0;
 unsigned int fieldTexture;
 const double d = 0.02;
+long glut_elapsed_time = 0;
+long timeTmp = 0;
 double mainRotorDeg = 25;
 double tailRotorDeg = 25;
 
@@ -761,19 +763,6 @@ void onKeyboard(unsigned char key, int x, int y) {
     }
 
     //TODO: törlendõ, csak debug
-    if (key == 'j') {
-        mainRotorDeg += 10;
-        if (mainRotorDeg > 360) {
-            mainRotorDeg -= 360;
-        }
-    }
-
-    if (key == 'k') {
-        tailRotorDeg += 10;
-        if (tailRotorDeg > 360) {
-            tailRotorDeg -= 360;
-        }
-    }
     if (key == 't') {
         cam.pos = Vector(0.0, 1.0, 2.0);
         cam.dump();
@@ -814,7 +803,33 @@ void onKeyboard(unsigned char key, int x, int y) {
 void onMouse(int button, int state, int x, int y) {
 }
 
+void simulateWorld(long tstart, long tend) {
+    const static double DT_50MS = 50;
+    timeTmp += tend - tstart;
+
+    if (timeTmp >= DT_50MS) {
+        for (long ts = timeTmp; timeTmp > 0; timeTmp -= DT_50MS) {
+
+            mainRotorDeg += 20;
+            if (mainRotorDeg > 360) {
+                mainRotorDeg -= 360;
+            }
+
+            tailRotorDeg -= 20;
+            if (tailRotorDeg > 360) {
+                tailRotorDeg -= 360;
+            }
+        }
+    }
+}
+
 void onIdle() {
+    long old_time = glut_elapsed_time;
+    glut_elapsed_time = glutGet(GLUT_ELAPSED_TIME);
+
+    simulateWorld(old_time, glut_elapsed_time);
+
+    glutPostRedisplay();
 }
 
 int main(int argc, char **argv) {
