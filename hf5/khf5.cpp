@@ -235,10 +235,12 @@ Camera cam;
 Vector sunPos;
 Quaternion globalQuat = Quaternion();
 Vector chopperDirection(0, 0, -1);
-Vector chopperMoveHere(0, 0, 0);
+Vector chopperPosition(0, 0, 0);
 
 Vector arrowAxisOfRot;
 double rotation = 20 * (M_PI / 180.0) / 2.0;
+Vector ballPos;
+bool ballShot = false;
 unsigned int fieldTexture;
 const double d = 0.02;
 long glut_elapsed_time = 0;
@@ -370,6 +372,58 @@ void drawCylinder(double r, double height) {
     glEnd();
 }
 
+void drawBall() {
+    if (!ballShot) {
+        return;
+    }
+
+    const GLfloat diff[] = {1.0, 0.08, 0.57, 1.0};
+    const GLfloat spec[] = {1.0, 0.08, 0.57, 1.0};
+    const GLfloat amb[] = {0.1, 0.1, 0.1, 1.0};
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT, amb);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, diff);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
+    glMaterialf(GL_FRONT, GL_SHININESS, 30.0);
+
+    glPushMatrix();
+    glTranslatef(ballPos.x, ballPos.y, ballPos.z);
+    glScalef(0.1, 0.1, 0.1);
+    /*
+     * Forras: https://github.com/tmichel/Grafika-hf-2011-osz/blob/master/khf4.cpp#L297
+     */
+    glBegin(GL_QUADS);
+    for (float u = 0.0f; u < 1.0f; u += d) {
+        for (float v = 0.0f; v < 1.0f; v += d) {
+            float x = cos(2 * M_PI * u) * sin(M_PI * v);
+            float y = sin(2 * M_PI * u) * sin(M_PI * v);
+            float z = cos(M_PI * v);
+            glNormal3f(x, y, z);
+            glVertex3f(x, y, z);
+
+            x = cos(2 * M_PI * (u)) * sin(M_PI * (v + d));
+            y = sin(2 * M_PI * (u)) * sin(M_PI * (v + d));
+            z = cos(M_PI * (v + d));
+            glNormal3f(x, y, z);
+            glVertex3f(x, y, z);
+
+            x = cos(2 * M_PI * (u + d)) * sin(M_PI * (v + d));
+            y = sin(2 * M_PI * (u + d)) * sin(M_PI * (v + d));
+            z = cos(M_PI * (v + d));
+            glNormal3f(x, y, z);
+            glVertex3f(x, y, z);
+
+            x = cos(2 * M_PI * (u + d)) * sin(M_PI * v);
+            y = sin(2 * M_PI * (u + d)) * sin(M_PI * v);
+            z = cos(M_PI * v);
+            glNormal3f(x, y, z);
+            glVertex3f(x, y, z);
+        }
+    }
+    glEnd();
+    glPopMatrix();
+}
+
 void drawQuatArrow() {
     int stacks = 40;
     float height = 3.9 * fabs(globalQuat.s);
@@ -490,7 +544,7 @@ void drawChopper() {
     setChopperKhakiColor();
 
     glPushMatrix();
-    glTranslatef(chopperMoveHere.x, chopperMoveHere.y, chopperMoveHere.z);
+    glTranslatef(chopperPosition.x, chopperPosition.y, chopperPosition.z);
 
     //TODO: törölni
     glPushMatrix();
@@ -753,6 +807,8 @@ void onDisplay() {
 
     drawChopper();
 
+    drawBall();
+
     glutSwapBuffers();
 }
 
@@ -792,9 +848,17 @@ void onKeyboard(unsigned char key, int x, int y) {
         rotateChopper(Vector::X(), -rotation);
     }
 
+    //shoot
+    if (key == ' ') {
+        cout << "-SHOT BALL" << endl;
+        cout << "--from pos: ";
+        chopperPosition.dump();
+        ballShot = true;
+        ballPos = chopperPosition;
+    }
+
     //TODO: törlendõ, csak debug
     if (key == 'k') {
-        chopperMoveHere = chopperMoveHere + chopperDirection;
     }
 
     if (key == 't') {
@@ -844,7 +908,7 @@ void simulateWorld(long tstart, long tend) {
     if (timeTmp >= DT_50MS) {
         for (long ts = timeTmp; timeTmp > 0; timeTmp -= DT_50MS) {
 
-            chopperMoveHere = chopperMoveHere + (chopperDirection * (1 / (1000 / DT_50MS)));
+            chopperPosition = chopperPosition + (chopperDirection * (1 / (1000 / DT_50MS)));
 
             mainRotorDeg += 20;
             if (mainRotorDeg > 360) {
