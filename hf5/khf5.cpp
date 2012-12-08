@@ -54,6 +54,8 @@ using namespace std;
 //
 // <editor-fold defaultstate="collapsed" desc="osztalyok, strukturak">
 
+const double d = 0.02;
+
 struct Vector {
     float x, y, z;
 
@@ -224,6 +226,67 @@ public:
         return (num * (1 / denom));
     }
 };
+
+class Bullet {
+public:
+    Vector pos, dir;
+    bool use;
+
+    Bullet() {
+    }
+
+    void draw() {
+        if (!use) {
+            return;
+        }
+
+        const GLfloat diff[] = {1.0, 0.08, 0.57, 1.0};
+        const GLfloat spec[] = {1.0, 0.08, 0.57, 1.0};
+        const GLfloat amb[] = {0.1, 0.1, 0.1, 1.0};
+
+        glMaterialfv(GL_FRONT, GL_AMBIENT, amb);
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, diff);
+        glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
+        glMaterialf(GL_FRONT, GL_SHININESS, 30.0);
+
+        glPushMatrix();
+        glTranslatef(pos.x, pos.y, pos.z);
+        glScalef(0.1, 0.1, 0.1);
+        /*
+         * Forras: https://github.com/tmichel/Grafika-hf-2011-osz/blob/master/khf4.cpp#L297
+         */
+        glBegin(GL_QUADS);
+        for (float u = 0.0f; u < 1.0f; u += d) {
+            for (float v = 0.0f; v < 1.0f; v += d) {
+                float x = cos(2 * M_PI * u) * sin(M_PI * v);
+                float y = sin(2 * M_PI * u) * sin(M_PI * v);
+                float z = cos(M_PI * v);
+                glNormal3f(x, y, z);
+                glVertex3f(x, y, z);
+
+                x = cos(2 * M_PI * (u)) * sin(M_PI * (v + d));
+                y = sin(2 * M_PI * (u)) * sin(M_PI * (v + d));
+                z = cos(M_PI * (v + d));
+                glNormal3f(x, y, z);
+                glVertex3f(x, y, z);
+
+                x = cos(2 * M_PI * (u + d)) * sin(M_PI * (v + d));
+                y = sin(2 * M_PI * (u + d)) * sin(M_PI * (v + d));
+                z = cos(M_PI * (v + d));
+                glNormal3f(x, y, z);
+                glVertex3f(x, y, z);
+
+                x = cos(2 * M_PI * (u + d)) * sin(M_PI * v);
+                y = sin(2 * M_PI * (u + d)) * sin(M_PI * v);
+                z = cos(M_PI * v);
+                glNormal3f(x, y, z);
+                glVertex3f(x, y, z);
+            }
+        }
+        glEnd();
+        glPopMatrix();
+    }
+};
 // </editor-fold>
 
 const int screenWidth = 600;
@@ -238,11 +301,11 @@ Vector chopperDirection(0, 0, -1);
 Vector chopperPosition(0, 0, 0);
 
 Vector arrowAxisOfRot;
-double rotation = 20 * (M_PI / 180.0) / 2.0;
-Vector ballPos;
-bool ballShot = false;
+const double rotation = 20 * (M_PI / 180.0) / 2.0;
+int shotCounter = 0;
+const int AMMO = 10;
+Bullet bullets[AMMO];
 unsigned int fieldTexture;
-const double d = 0.02;
 long glut_elapsed_time = 0;
 long timeTmp = 0;
 double mainRotorDeg = 25;
@@ -370,58 +433,6 @@ void drawCylinder(double r, double height) {
         glVertex3f(x, height, z);
     }
     glEnd();
-}
-
-void drawBall() {
-    if (!ballShot) {
-        return;
-    }
-
-    const GLfloat diff[] = {1.0, 0.08, 0.57, 1.0};
-    const GLfloat spec[] = {1.0, 0.08, 0.57, 1.0};
-    const GLfloat amb[] = {0.1, 0.1, 0.1, 1.0};
-
-    glMaterialfv(GL_FRONT, GL_AMBIENT, amb);
-    glMaterialfv(GL_FRONT, GL_DIFFUSE, diff);
-    glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
-    glMaterialf(GL_FRONT, GL_SHININESS, 30.0);
-
-    glPushMatrix();
-    glTranslatef(ballPos.x, ballPos.y, ballPos.z);
-    glScalef(0.1, 0.1, 0.1);
-    /*
-     * Forras: https://github.com/tmichel/Grafika-hf-2011-osz/blob/master/khf4.cpp#L297
-     */
-    glBegin(GL_QUADS);
-    for (float u = 0.0f; u < 1.0f; u += d) {
-        for (float v = 0.0f; v < 1.0f; v += d) {
-            float x = cos(2 * M_PI * u) * sin(M_PI * v);
-            float y = sin(2 * M_PI * u) * sin(M_PI * v);
-            float z = cos(M_PI * v);
-            glNormal3f(x, y, z);
-            glVertex3f(x, y, z);
-
-            x = cos(2 * M_PI * (u)) * sin(M_PI * (v + d));
-            y = sin(2 * M_PI * (u)) * sin(M_PI * (v + d));
-            z = cos(M_PI * (v + d));
-            glNormal3f(x, y, z);
-            glVertex3f(x, y, z);
-
-            x = cos(2 * M_PI * (u + d)) * sin(M_PI * (v + d));
-            y = sin(2 * M_PI * (u + d)) * sin(M_PI * (v + d));
-            z = cos(M_PI * (v + d));
-            glNormal3f(x, y, z);
-            glVertex3f(x, y, z);
-
-            x = cos(2 * M_PI * (u + d)) * sin(M_PI * v);
-            y = sin(2 * M_PI * (u + d)) * sin(M_PI * v);
-            z = cos(M_PI * v);
-            glNormal3f(x, y, z);
-            glVertex3f(x, y, z);
-        }
-    }
-    glEnd();
-    glPopMatrix();
 }
 
 void drawQuatArrow() {
@@ -635,7 +646,9 @@ void drawChopper() {
 
     drawQuatArrow();
 
-    drawBall();
+    for (int i = 0; i < AMMO; i++) {
+        bullets[i].draw();
+    }
 
     glPopMatrix();
 }
@@ -850,12 +863,16 @@ void onKeyboard(unsigned char key, int x, int y) {
 
     //shoot
     if (key == ' ') {
-        cout << "-SHOT BALL" << endl;
-        cout << "--from pos: ";
-        chopperDirection.dump();
+        if (shotCounter < AMMO) {
+            cout << "-SHOT BALL: " << (shotCounter) << endl;
+            cout << "--from pos: ";
+            chopperDirection.dump();
 
-        ballShot = true;
-        ballPos = chopperDirection;
+            bullets[shotCounter].pos = chopperDirection;
+            bullets[shotCounter].dir = chopperDirection;
+            bullets[shotCounter].use = true;
+            shotCounter++;
+        }
     }
 
     //TODO: törlendõ, csak debug
@@ -912,15 +929,15 @@ void simulateWorld(long tstart, long tend) {
             //helikopter mozgatas
             chopperPosition = chopperPosition + (chopperDirection * (1 / (1000 / DT_50MS)));
 
-            //lovedek ferde/vizszintes hajitas foldeteresig
-            if (ballShot) {
-                if (ballPos.y > -5) {
-                    ballPos = ballPos + chopperDirection;
-                    ballPos.y -= 0.4;
-                } else { //pattogas
-                    cout << "foldeteres" << endl;
-                    //reset
-                    ballShot = false;
+            for (int i = 0; i < shotCounter; i++) {
+                if (bullets[i].pos.y > -5) {
+                    bullets[i].pos = bullets[i].pos + chopperDirection;
+                    bullets[i].pos.y -= 0.4;
+                } else {
+                    if (bullets[i].use) {
+                        cout << "foldeteres" << endl;
+                        bullets[i].use = false;
+                    }
                 }
             }
 
