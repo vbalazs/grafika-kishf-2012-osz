@@ -240,13 +240,6 @@ Vector chopperPosition(0, 0, 0);
 Vector arrowAxisOfRot;
 double rotation = 20 * (M_PI / 180.0) / 2.0;
 Vector ballPos;
-Vector ballDir;
-const double ball_v0 = 10; // m/s
-double ball_vx;
-double ball_vy;
-long ball_time_ms = 0;
-const double g = 9.81;
-double ballStartRad;
 bool ballShot = false;
 unsigned int fieldTexture;
 const double d = 0.02;
@@ -642,6 +635,8 @@ void drawChopper() {
 
     drawQuatArrow();
 
+    drawBall();
+
     glPopMatrix();
 }
 
@@ -814,8 +809,6 @@ void onDisplay() {
 
     drawChopper();
 
-    drawBall();
-
     glutSwapBuffers();
 }
 
@@ -861,22 +854,8 @@ void onKeyboard(unsigned char key, int x, int y) {
         cout << "--from pos: ";
         chopperDirection.dump();
 
-        ball_time_ms = 0;
         ballShot = true;
         ballPos = chopperDirection;
-        double a = acos(Vector(chopperDirection.x, 0, chopperDirection.z).Length() / chopperDirection.Length());
-
-        if (chopperDirection.y > 0 && chopperDirection.z > 0) {
-            a = M_PI - a;
-        }
-        if (chopperDirection.y < 0 && chopperDirection.z > 0) {
-            a += M_PI;
-        }
-        if (chopperDirection.y < 0 && chopperDirection.z < 0) {
-            a = 2 * M_PI - a;
-        }
-        ballStartRad = a;
-        cout << "ballDeg=" << (a * (180 / M_PI)) << endl;
     }
 
     //TODO: törlendõ, csak debug
@@ -931,22 +910,17 @@ void simulateWorld(long tstart, long tend) {
         for (long ts = timeTmp; timeTmp > 0; timeTmp -= DT_50MS) {
 
             //helikopter mozgatas
-            //            chopperPosition = chopperPosition + (chopperDirection * (1 / (1000 / DT_50MS)));
+            chopperPosition = chopperPosition + (chopperDirection * (1 / (1000 / DT_50MS)));
 
             //lovedek ferde/vizszintes hajitas foldeteresig
             if (ballShot) {
-                ball_time_ms += DT_50MS;
-                double t = ball_time_ms / 1000.0;
                 if (ballPos.y > -5) {
-                    const double ball_z = ball_v0 * t * cos(ballStartRad);
-                    const double ball_y = ball_v0 * t * sin(ballStartRad) - g / 2.0 * pow(t, 2);
-
-                    ballPos = Vector(0, ball_y, chopperDirection.z - ball_z);
+                    ballPos = ballPos + chopperDirection;
+                    ballPos.y -= 0.4;
                 } else { //pattogas
                     cout << "foldeteres" << endl;
                     //reset
                     ballShot = false;
-                    ball_time_ms = 0;
                 }
             }
 
