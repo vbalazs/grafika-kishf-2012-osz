@@ -868,10 +868,6 @@ void onKeyboard(unsigned char key, int x, int y) {
     //shoot
     if (key == ' ') {
         if (shotCounter < AMMO) {
-            cout << "-SHOT BALL: " << (shotCounter) << endl;
-            cout << "--from pos: ";
-            chopperDirection.dump();
-
             bullets[shotCounter].pos = chopperPosition;
             bullets[shotCounter].dir = chopperDirection;
             bullets[shotCounter].use = true;
@@ -923,6 +919,22 @@ void onKeyboard(unsigned char key, int x, int y) {
 void onMouse(int button, int state, int x, int y) {
 }
 
+void stepBullets(const double dt) {
+    for (int i = 0; i < shotCounter; i++) {
+        if (bullets[i].use) {
+
+            bullets[i].dir.y -= 5 * (dt / 2000.0);
+            Vector next = bullets[i].pos + bullets[i].dir;
+
+            if (next.y < -5) {
+                bullets[i].dir.y *= -0.9;
+            }
+
+            bullets[i].pos = bullets[i].pos + bullets[i].dir;
+        }
+    }
+}
+
 void simulateWorld(long tstart, long tend) {
     const static double DT_50MS = 50;
     timeTmp += tend - tstart;
@@ -933,24 +945,7 @@ void simulateWorld(long tstart, long tend) {
             //helikopter mozgatas
             chopperPosition = chopperPosition + (chopperDirection * (1 / (1000 / DT_50MS)));
 
-            for (int i = 0; i < shotCounter; i++) {
-                if (bullets[i].pos.y > -5) {
-                    bullets[i].pos = bullets[i].pos + (bullets[i].dir * 0.5);
-                    bullets[i].pos.y -= 0.3;
-                } else {
-                    if (bullets[i].use) {
-                        cout << "foldeteres" << endl;
-                        //                        bullets[i].use = false;
-
-                        //                        bullets[i].dir.y += 5;
-                        bullets[i].bounced++;
-
-                        if (bullets[i].bounced > BOUNCE_LIMIT) {
-                            bullets[i].use = false;
-                        }
-                    }
-                }
-            }
+            stepBullets(DT_50MS);
 
             mainRotorDeg += 20;
             if (mainRotorDeg > 360) {
