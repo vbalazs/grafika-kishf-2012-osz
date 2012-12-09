@@ -231,6 +231,7 @@ class Bullet {
 public:
     Vector pos, dir;
     bool use;
+    int bounced;
 
     Bullet() {
     }
@@ -304,6 +305,7 @@ Vector arrowAxisOfRot;
 const double rotation = 20 * (M_PI / 180.0) / 2.0;
 int shotCounter = 0;
 const int AMMO = 10;
+const int BOUNCE_LIMIT = 6;
 Bullet bullets[AMMO];
 unsigned int fieldTexture;
 long glut_elapsed_time = 0;
@@ -646,10 +648,6 @@ void drawChopper() {
 
     drawQuatArrow();
 
-    for (int i = 0; i < AMMO; i++) {
-        bullets[i].draw();
-    }
-
     glPopMatrix();
 }
 
@@ -822,6 +820,12 @@ void onDisplay() {
 
     drawChopper();
 
+    glPushMatrix();
+    for (int i = 0; i < AMMO; i++) {
+        bullets[i].draw();
+    }
+    glPopMatrix();
+
     glutSwapBuffers();
 }
 
@@ -868,7 +872,7 @@ void onKeyboard(unsigned char key, int x, int y) {
             cout << "--from pos: ";
             chopperDirection.dump();
 
-            bullets[shotCounter].pos = chopperDirection;
+            bullets[shotCounter].pos = chopperPosition;
             bullets[shotCounter].dir = chopperDirection;
             bullets[shotCounter].use = true;
             shotCounter++;
@@ -931,12 +935,19 @@ void simulateWorld(long tstart, long tend) {
 
             for (int i = 0; i < shotCounter; i++) {
                 if (bullets[i].pos.y > -5) {
-                    bullets[i].pos = bullets[i].pos + chopperDirection;
-                    bullets[i].pos.y -= 0.4;
+                    bullets[i].pos = bullets[i].pos + (bullets[i].dir * 0.5);
+                    bullets[i].pos.y -= 0.3;
                 } else {
                     if (bullets[i].use) {
                         cout << "foldeteres" << endl;
-                        bullets[i].use = false;
+                        //                        bullets[i].use = false;
+
+                        //                        bullets[i].dir.y += 5;
+                        bullets[i].bounced++;
+
+                        if (bullets[i].bounced > BOUNCE_LIMIT) {
+                            bullets[i].use = false;
+                        }
                     }
                 }
             }
