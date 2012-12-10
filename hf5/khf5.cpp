@@ -295,7 +295,6 @@ const int screenHeight = 600;
 
 Color image[screenWidth*screenHeight];
 
-Camera cam;
 Vector sunPos;
 Quaternion globalQuat = Quaternion();
 Vector chopperDirection(0, 0, -1);
@@ -303,10 +302,20 @@ Vector chopperPosition(0, 0, 0);
 
 Vector arrowAxisOfRot;
 const double rotation = 20 * (M_PI / 180.0) / 2.0;
+
 int shotCounter = 0;
 const int AMMO = 10;
-const int BOUNCE_LIMIT = 6;
 Bullet bullets[AMMO];
+const double BOUNCINESS = 0.9;
+
+Camera cam;
+Vector camBallSpeed(0, 0, 0);
+const double CAM_BALL_AIR_RES = 0.01;
+const double CAM_SPRING_K = 0.001;
+const double CAM_SPRING_LENGTH = 1;
+const double CAM_SPRING_MAX_LENGTH = 2;
+const Vector CAM_UP_AND_GRAV_FORCE = Vector(0, 0.002, 0);
+
 unsigned int fieldTexture;
 long glut_elapsed_time = 0;
 long timeTmp = 0;
@@ -800,7 +809,7 @@ void onInitialization() {
     glShadeModel(GL_SMOOTH);
     glDisable(GL_TEXTURE_2D);
 
-    cam.pos = Vector(0.0, 2.3, 7);
+    cam.pos = Vector(0.0, 2.3, 4);
     sunPos = Vector(0.0, 3, 3);
     setLight(sunPos);
 
@@ -866,51 +875,13 @@ void onKeyboard(unsigned char key, int x, int y) {
     }
 
     //shoot
-    if (key == ' ') {
+    if (key == 32) {
         if (shotCounter < AMMO) {
             bullets[shotCounter].pos = chopperPosition;
             bullets[shotCounter].dir = chopperDirection;
             bullets[shotCounter].use = true;
             shotCounter++;
         }
-    }
-
-    //TODO: törlendõ, csak debug
-    if (key == 'k') {
-    }
-
-    if (key == 't') {
-        cam.pos = Vector(0.0, 1.0, 2.0);
-        cam.dump();
-    }
-
-    if (key == 'c') {
-        cam.pos.x -= 0.2;
-        cam.dump();
-    }
-
-    if (key == 'C') {
-        cam.pos.x += 0.2;
-        cam.dump();
-    }
-
-    if (key == 'v') {
-        cam.pos.y -= 0.2;
-        cam.dump();
-    }
-
-    if (key == 'V') {
-        cam.pos.y += 0.2;
-        cam.dump();
-    }
-
-    if (key == 'z') {
-        cam.pos.z -= 0.2;
-        cam.dump();
-    }
-    if (key == 'Z') {
-        cam.pos.z += 0.2;
-        cam.dump();
     }
 
     glutPostRedisplay();
@@ -927,12 +898,30 @@ void stepBullets(const double dt) {
             Vector next = bullets[i].pos + bullets[i].dir;
 
             if (next.y < -5) {
-                bullets[i].dir.y *= -0.9;
+                bullets[i].dir.y *= -BOUNCINESS;
             }
 
             bullets[i].pos = bullets[i].pos + bullets[i].dir;
         }
     }
+}
+
+void stepCamera(const double dt) {
+    Vector distanceVector = chopperPosition - cam.pos;
+    const double strain = distanceVector.Length() - CAM_SPRING_MAX_LENGTH;
+
+    Vector springForce;
+    if (strain > 0) {
+        const double hooks_law_force = -CAM_SPRING_K * -strain;
+        springForce = distanceVector.getNormalized() * hooks_law_force;
+    }
+
+    Vector a = springForce + (camBallSpeed * -CAM_BALL_AIR_RES) + CAM_UP_AND_GRAV_FORCE;
+
+    camBallSpeed = a * dt;
+
+    cam.pos = cam.pos + camBallSpeed * dt;
+    cam.dir = chopperPosition;
 }
 
 void simulateWorld(long tstart, long tend) {
@@ -946,6 +935,7 @@ void simulateWorld(long tstart, long tend) {
             chopperPosition = chopperPosition + (chopperDirection * (1 / (1000 / DT_50MS)));
 
             stepBullets(DT_50MS);
+            stepCamera(DT_50MS / 10.0);
 
             mainRotorDeg += 20;
             if (mainRotorDeg > 360) {
