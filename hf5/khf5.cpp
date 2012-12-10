@@ -908,7 +908,7 @@ void stepBullets(const double dt) {
 
 void stepCamera(const double dt) {
     Vector distanceVector = chopperPosition - cam.pos;
-    const double strain = distanceVector.Length() - CAM_SPRING_MAX_LENGTH;
+    const double strain = distanceVector.Length() - CAM_SPRING_LENGTH;
 
     Vector springForce;
     if (strain > 0) {
