@@ -1,0 +1,24 @@
+Készítsen helikoptert és alatta elterülő tájat. A helikopter 
+(http://hu.wikipedia.org/wiki/Helikopter) háromszöghálóból, 
+ellipszoidből és hengerből összerakott testtel rendelkezik, kétágú, 
+forgatható főrotorja van (egy lapát egy téglatest), és háromágú 
+csak kisebb farok rotorja.
+
+A helikoptert a RPY szögeivel lehet kormányozni: R-E a roll, P-O a pitch, 
+Y-X pedig a yaw szöget növeli, illetve csökkenti 20 fokkal. 
+A virtuális kamera a helikopter felett van valamivel és kissé lefele néz, úgy, 
+hogy az optikai tengelye a helikopter közepén átmenjen. 
+A helikopter teste diffúz-spekuláris khaki-színűre van festve, 
+a pilótafülke átlátszó, spekuláris, a forgólapátok szürke spekuláris jellegűek.
+
+A helikopter pillanatnyi orientációját a kvaterniójának a megjelenítésével is 
+megmutatjuk. Egy kvaterniót a helikopter közepéből induló piros 
+diffúz-spekuláris nyíllal láttatjuk (nyíl=henger + a végén kúp), amelynek iránya 
+párhuzamos a kvaternió képzetes részének irányával, hossza pedig arányos a valós 
+rész abszolút értékével. Az arányossági tényezőt úgy kell beállítani, 
+hogy 90 fokos elforgatásnál a nyíl kb. kétszer hosszabb legyen a helikopter hosszánál.
+
+A tájat egy nagy tesszellált téglalapból kell létrehozni, 
+amelyet procedúrális (!) textúrával látunk el. A tájon elszórt épületek állnak
+
+A helikoptert és a tájat a nap (irányfényforrás) és az ég (ambiens fényforrás) világítja meg.

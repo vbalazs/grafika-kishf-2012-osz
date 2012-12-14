@@ -1,0 +1,11 @@
+Animálja a 4. feladat helikopterét a következőképpen. A fő és mellékrotor 
+állandó szögsebességgel forog. Az R,P,Y (nagybetűkkel!) szögek a helikopter 
+aktuális koordinátarendszeréhez képest értendők, azaz a helikopter saját 
+magához képest kormányozzuk. 
+
+A helikoptert két kormányzás között egyenesvonalú egyenletes mozgást végez előre 
+és egy a helikopterhez gumikötéllel odakötött, léggömbön függő kamerával követjük. 
+A léggömbből adódó felhajtóerő állandó, a légellenállás a sebességgel arányos. 
+A kamera mindig a gumikötés húzásának irányába néz. SPACE billenntyű lenyomására 
+a helikopter egy gumilabdád lő ki, amely a terepen pattog, a "bounciness" 0.9, 
+azaz az ütközéskor a merőleges sebesség abszolút értéke az eredeti 90 százaléka lesz.
